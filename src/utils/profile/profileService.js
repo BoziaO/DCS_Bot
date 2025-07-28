@@ -82,7 +82,7 @@ const getOrCreateProfile = async (userId, guildId, useCache = true) => {
 
     if (!userProfile.ghostEncounters) userProfile.ghostEncounters = {};
     if (!userProfile.favoriteEquipment) userProfile.favoriteEquipment = [];
-    if (!userProfile.inventory) userProfile.inventory = [];
+    if (!userProfile.inventory) userProfile.inventory = new Map();
 
     if (useCache) {
       cache.setProfile(userId, guildId, userProfile);

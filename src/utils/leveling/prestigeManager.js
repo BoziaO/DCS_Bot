@@ -114,16 +114,14 @@ class PrestigeManager {
       const specialRewards = this.getSpecialRewards(newPrestige);
 
       if (specialRewards.items.length > 0) {
-        if (!profile.inventory) profile.inventory = [];
+        if (!profile.inventory) profile.inventory = new Map();
 
         for (const item of specialRewards.items) {
-          const existingItem = profile.inventory.find(
-            (inv) => inv.name === item.name
-          );
-          if (existingItem) {
-            existingItem.quantity += item.quantity;
+          if (profile.inventory.has(item.name)) {
+            const currentQuantity = profile.inventory.get(item.name);
+            profile.inventory.set(item.name, currentQuantity + item.quantity);
           } else {
-            profile.inventory.push(item);
+            profile.inventory.set(item.name, item.quantity);
           }
         }
       }

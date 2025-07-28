@@ -150,16 +150,14 @@ class InvestigateCore {
     }
 
     for (const rewardItem of rewards.items) {
-      const existingItem = userProfile.inventory.find(
-        (i) => i.name === rewardItem.name
-      );
-      if (existingItem) {
-        existingItem.quantity += rewardItem.quantity;
+      if (userProfile.inventory.has(rewardItem.name)) {
+        const currentQuantity = userProfile.inventory.get(rewardItem.name);
+        userProfile.inventory.set(
+          rewardItem.name,
+          currentQuantity + rewardItem.quantity
+        );
       } else {
-        userProfile.inventory.push({
-          name: rewardItem.name,
-          quantity: rewardItem.quantity,
-        });
+        userProfile.inventory.set(rewardItem.name, rewardItem.quantity);
       }
     }
 

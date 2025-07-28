@@ -262,19 +262,17 @@ class ChallengeManager {
       }
 
       if (rewards.items && rewards.items.length > 0) {
-        if (!profile.inventory) profile.inventory = [];
+        if (!profile.inventory) profile.inventory = new Map();
 
         for (const rewardItem of rewards.items) {
-          const existingItem = profile.inventory.find(
-            (item) => item.name === rewardItem.name
-          );
-          if (existingItem) {
-            existingItem.quantity += rewardItem.quantity;
+          if (profile.inventory.has(rewardItem.name)) {
+            const currentQuantity = profile.inventory.get(rewardItem.name);
+            profile.inventory.set(
+              rewardItem.name,
+              currentQuantity + rewardItem.quantity
+            );
           } else {
-            profile.inventory.push({
-              name: rewardItem.name,
-              quantity: rewardItem.quantity,
-            });
+            profile.inventory.set(rewardItem.name, rewardItem.quantity);
           }
         }
       }

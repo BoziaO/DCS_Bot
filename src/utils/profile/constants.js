@@ -53,7 +53,7 @@ const ACHIEVEMENTS = {
     description: "Zdobądź 20 różnych przedmiotów",
     icon: "🎒",
     reward: 750,
-    condition: (profile) => profile.inventory && profile.inventory.length >= 20,
+    condition: (profile) => profile.inventory && profile.inventory.size >= 20,
   },
   millionaire: {
     name: "Milioner",
