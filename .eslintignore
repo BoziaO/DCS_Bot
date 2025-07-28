@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+coverage/
+*.min.js
+.env
+.env.*
+logs/
+*.log
+src/assets/
+.vscode/
+.github/
+*.md

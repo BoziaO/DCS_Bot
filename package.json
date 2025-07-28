@@ -1,0 +1,47 @@
+{
+  "name": "dcs-discord-bot",
+  "version": "1.0.0",
+  "description": "Advanced Discord bot with leveling system, economy, moderation, and Phasmophobia integration",
+  "main": "./src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --inspect src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "performance": "node -e \"console.log('Use /performance command in Discord for metrics')\"",
+    "memory": "node --expose-gc src/index.js",
+    "profile": "node --prof src/index.js",
+    "deploy": "node src/deploy-commands.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "discord.js",
+    "phasmophobia",
+    "leveling",
+    "economy",
+    "moderation"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/DCS-Discord-Bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/DCS-Discord-Bot/issues"
+  },
+  "homepage": "https://github.com/yourusername/DCS-Discord-Bot#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.18.0",
+    "discord.js": "^14.20.0",
+    "dotenv": "^17.2.0",
+    "ffmpeg-static": "^5.2.0",
+    "mongoose": "^8.16.0",
+    "node-cache": "^5.1.2",
+    "node-cron": "^4.2.1",
+    "nodemon": "^3.1.10"
+  }
+}
