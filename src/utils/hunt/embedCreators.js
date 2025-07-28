@@ -160,9 +160,10 @@ const createErrorEmbed = (
 };
 
 /**
- * Tworzy embed timeout polowania
- * @param {Object} params - Parametry timeout
- * @returns {EmbedBuilder} Embed timeout
+ * Tworzy embed zebranych dowodów
+ * @param {Object} user - Użytkownik Discord
+ * @param {Object} huntState - Stan polowania
+ * @returns {EmbedBuilder} Embed dowodów
  */
 const createEvidenceEmbed = (user, huntState) => {
   return new EmbedBuilder()
@@ -176,6 +177,25 @@ const createEvidenceEmbed = (user, huntState) => {
     .setColor("#FFFF00");
 };
 
+/**
+ * Tworzy przycisk powrotu do polowania
+ * @returns {ActionRowBuilder} Rząd z przyciskiem powrotu
+ */
+const createEvidenceReturnButton = () => {
+  const {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+  } = require("discord.js");
+
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("hunt_return_from_evidence")
+      .setLabel("🔙 Powrót do polowania")
+      .setStyle(ButtonStyle.Secondary)
+  );
+};
+
 module.exports = {
   createEmptyHuntEmbed,
   createHuntInProgressEmbed,
@@ -183,4 +203,5 @@ module.exports = {
   createTimeoutEmbed,
   createErrorEmbed,
   createEvidenceEmbed,
+  createEvidenceReturnButton,
 };

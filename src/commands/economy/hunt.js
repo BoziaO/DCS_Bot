@@ -26,7 +26,10 @@ const {
   createActionResultEmbed,
 } = require("../../utils/hunt/interactiveHunt");
 
-const { createEvidenceEmbed } = require("../../utils/hunt/embedCreators");
+const {
+  createEvidenceEmbed,
+  createEvidenceReturnButton,
+} = require("../../utils/hunt/embedCreators");
 
 const {
   createInteractiveHuntState,
@@ -768,9 +771,21 @@ async function startInteractiveHunt(
 
       if (actionInteraction.customId === "hunt_view_evidence") {
         const evidenceEmbed = createEvidenceEmbed(interaction.user, huntState);
+        const returnButton = createEvidenceReturnButton();
         await actionInteraction.update({
           embeds: [evidenceEmbed],
-          components: [],
+          components: [returnButton],
+        });
+        return;
+      }
+
+      if (actionInteraction.customId === "hunt_return_from_evidence") {
+        updateHuntTimer(huntState);
+        const huntEmbed = createHuntStartEmbed(interaction.user, huntState);
+        const huntButtons = createHuntActionButtons();
+        await actionInteraction.update({
+          embeds: [huntEmbed],
+          components: huntButtons,
         });
         return;
       }
