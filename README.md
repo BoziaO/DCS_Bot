@@ -104,16 +104,9 @@ DCS/
 
 ### Ekonomia
 
-- `/balance` - Sprawdź saldo
+- `/progile` - Sprawdź saldo
 - `/shop` - Sklep z rolami
-- `/daily` - Codzienne nagrody
-
-## 🔄 Skrypty NPM
-
-- `npm start` - Uruchom bota
-- `npm run dev` - Uruchom w trybie debug
-- `npm run memory` - Uruchom z garbage collection
-- `npm run profile` - Uruchom z profilowaniem
+- `/hunt` - Praca
 
 ## 📊 Monitoring i Performance
 
