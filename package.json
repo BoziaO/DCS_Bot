@@ -7,10 +7,16 @@
     "start": "node src/index.js",
     "dev": "node --inspect src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
     "performance": "node -e \"console.log('Use /performance command in Discord for metrics')\"",
     "memory": "node --expose-gc src/index.js",
     "profile": "node --prof src/index.js",
-    "deploy": "node src/deploy-commands.js"
+    "deploy": "node src/deploy-commands.js",
+    "deploy:dev": "node src/deploy-commands.js --dev",
+    "validate": "node src/command-validator.js",
+    "docs": "echo \"Documentation available in README.md\"",
+    "clean": "node -e \"console.log('Cleaning cache...'); require('./src/utils/cache.js').clear();\""
   },
   "keywords": [
     "discord",
@@ -19,9 +25,22 @@
     "phasmophobia",
     "leveling",
     "economy",
-    "moderation"
+    "moderation",
+    "gaming",
+    "interactive",
+    "mongodb",
+    "achievements",
+    "challenges",
+    "hunt",
+    "investigation",
+    "ghost",
+    "verification",
+    "tickets",
+    "welcome",
+    "cache",
+    "performance"
   ],
-  "author": "Your Name",
+  "author": "DCS Team",
   "license": "MIT",
   "repository": {
     "type": "git",
