@@ -29,7 +29,7 @@ class CooperativeHunt {
       participants: teamSession.participants,
       sharedEvidence: [],
       teamSanity: 100,
-      timeRemaining: difficultyData.time * 1.5, // More time for team hunts
+      timeRemaining: difficultyData.time * 1.5,
       totalActionsUsed: 0,
       maxActions: difficultyData.maxActions * teamSession.participants.length,
       teamEarnings: 0,
@@ -38,17 +38,14 @@ class CooperativeHunt {
       isCorrect: false,
       startTime: Date.now(),
 
-      // Team-specific bonuses
       teamworkBonus: this.calculateTeamworkBonus(
         teamSession.participants.length
       ),
-      communicationBonus: 0.1, // 10% bonus for team communication
-      sharedRiskReduction: 0.15, // 15% less sanity loss when in team
+      communicationBonus: 0.1,
+      sharedRiskReduction: 0.15,
 
-      // Individual contributions
       individualContributions: new Map(),
 
-      // Shared equipment effects
       sharedEquipmentBonuses: {
         sanityLossReduction: 0,
         investigateBonus: 0,
@@ -66,10 +63,10 @@ class CooperativeHunt {
    */
   calculateTeamworkBonus(memberCount) {
     const bonuses = {
-      2: 0.15, // 15% bonus for 2 members
-      3: 0.25, // 25% bonus for 3 members
-      4: 0.35, // 35% bonus for 4 members
-      5: 0.4, // 40% bonus for 5+ members
+      2: 0.15,
+      3: 0.25,
+      4: 0.35,
+      5: 0.4,
     };
     return bonuses[Math.min(memberCount, 5)] || bonuses[5];
   }
@@ -80,17 +77,14 @@ class CooperativeHunt {
   applyTeamEquipmentEffects(huntState, teamSession) {
     const allItems = new Set();
 
-    // Zbierz wszystkie przedmioty od wszystkich członków zespołu
     teamSession.huntData.selectedItems.forEach((memberItems) => {
       memberItems.items.forEach((item) => allItems.add(item));
     });
 
-    // Aplikuj efekty z możliwością stackowania dla niektórych itemów
     allItems.forEach((itemName) => {
       const itemEffect = HUNT_ITEM_EFFECTS[itemName];
       if (itemEffect) {
         try {
-          // Niektóre efekty stackują się w zespole
           if (itemEffect.stackable) {
             const itemCount = this.countItemInTeam(itemName, teamSession);
             for (let i = 0; i < itemCount; i++) {
@@ -126,10 +120,8 @@ class CooperativeHunt {
   async handleTeamInvestigateAction(huntState, userId, teamSession) {
     huntState.totalActionsUsed++;
 
-    // Aktualizuj indywidualny wkład
     this.updateIndividualContribution(huntState, userId, "investigate");
 
-    // Aplikuj bonusy zespołowe
     const baseChance = 0.6;
     const teamBonus = huntState.teamworkBonus;
     const equipmentBonus = huntState.sharedEquipmentBonuses.investigateBonus;
@@ -138,7 +130,6 @@ class CooperativeHunt {
       baseChance + teamBonus + equipmentBonus
     );
 
-    // Zmniejszona utrata poczytalności dzięki wsparciu zespołu
     let sanityLoss = Math.floor(Math.random() * 8 + 5);
     sanityLoss = Math.max(2, sanityLoss * (1 - huntState.sharedRiskReduction));
     sanityLoss = Math.max(
@@ -160,10 +151,8 @@ class CooperativeHunt {
           ];
         huntState.sharedEvidence.push(foundEvidence);
 
-        // Dodaj dowód do sesji zespołowej
         await teamSession.addEvidence(userId, foundEvidence);
 
-        // Aktualizuj wkład użytkownika
         const contribution = huntState.individualContributions.get(userId) || {
           evidenceFound: [],
           actionsUsed: 0,
@@ -225,7 +214,7 @@ class CooperativeHunt {
     this.updateIndividualContribution(huntState, userId, "photo");
 
     const baseChance = 0.4;
-    const teamBonus = huntState.teamworkBonus * 0.5; // Mniejszy bonus dla zdjęć
+    const teamBonus = huntState.teamworkBonus * 0.5;
     const equipmentBonus = huntState.sharedEquipmentBonuses.photoBonus;
     const photoChance = Math.min(0.85, baseChance + teamBonus + equipmentBonus);
 
@@ -425,26 +414,20 @@ class CooperativeHunt {
     const baseReward = huntState.mapData.baseReward;
     totalEarnings += baseReward;
 
-    // Bonus zespołowy
     totalEarnings *= 1 + huntState.teamworkBonus;
 
-    // Mnożnik trudności
     totalEarnings *= huntState.difficultyData.earningsMultiplier;
 
-    // Bonus za czas
-    const timeBonus = Math.floor(huntState.timeRemaining / 1000) * 3; // Mniejszy bonus za czas dla zespołów
+    const timeBonus = Math.floor(huntState.timeRemaining / 1000) * 3;
     totalEarnings += timeBonus;
 
-    // Bonus za poczytalność zespołu
     const sanityBonus = Math.floor(huntState.teamSanity * 1.5);
     totalEarnings += sanityBonus;
 
-    // Bonus za poprawną identyfikację
     if (huntState.isCorrect) {
-      totalEarnings *= 1.8; // Większy bonus dla zespołów
+      totalEarnings *= 1.8;
     }
 
-    // Bonus za współpracę (więcej dowodów = większy bonus)
     const cooperationBonus = huntState.sharedEvidence.length * 50;
     totalEarnings += cooperationBonus;
 
@@ -459,7 +442,6 @@ class CooperativeHunt {
     const rewards = new Map();
 
     if (teamSession.settings.shareRewards) {
-      // Równy podział nagród
       const baseReward = Math.floor(totalRewards / participants.length);
 
       participants.forEach((participant) => {
@@ -470,7 +452,6 @@ class CooperativeHunt {
         });
       });
     } else {
-      // Podział na podstawie wkładu
       const totalContributions = Array.from(
         huntState.individualContributions.values()
       ).reduce((sum, contrib) => sum + contrib.actionsUsed, 0);
@@ -505,7 +486,7 @@ class CooperativeHunt {
     totalRewards,
     individualRewards
   ) {
-    const team = teamSession.team; // Assume team data is populated
+    const team = teamSession.team;
 
     const embed = new EmbedBuilder()
       .setTitle(`🎯 Wyniki zespołowego polowania - ${team?.name || "Zespół"}`)
@@ -540,7 +521,6 @@ class CooperativeHunt {
       ])
       .setTimestamp();
 
-    // Dodaj indywidualne wkłady
     const contributionsText = Array.from(
       huntState.individualContributions.entries()
     )
@@ -600,7 +580,6 @@ class CooperativeHunt {
         .setEmoji("📋")
     );
 
-    // Dodaj przycisk zgadywania jeśli zespół ma wystarczająco dowodów
     const completion = this.checkTeamHuntCompletion(huntState);
     if (completion.canGuess) {
       row2.addComponents(
@@ -612,7 +591,6 @@ class CooperativeHunt {
       );
     }
 
-    // Przycisk ucieczki zespołu
     row2.addComponents(
       new ButtonBuilder()
         .setCustomId(`team_hunt_escape_${sessionId}`)

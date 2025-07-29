@@ -2,6 +2,9 @@ const { Events, Collection, EmbedBuilder } = require("discord.js");
 const Profile = require("../models/Profile");
 const LevelRoleConfig = require("../models/LevelRoleConfig");
 const LevelingConfig = require("../models/LevelingConfig");
+const TicketConfig = require("../models/tickets/TicketConfig");
+const Ticket = require("../models/tickets/Ticket");
+const TicketMessage = require("../models/tickets/TicketMessage");
 
 const LevelCalculator = require("../utils/leveling/levelCalculator");
 const XpMultiplier = require("../utils/leveling/xpMultiplier");
@@ -21,6 +24,8 @@ module.exports = {
     if (message.author.bot || !message.guild) {
       return;
     }
+
+    await this.handleTicketMessage(message);
 
     const levelingConfig = await LevelingConfig.findOne({
       guildId: message.guild.id,
@@ -222,6 +227,60 @@ module.exports = {
       }
     } catch (error) {
       console.error("Błąd podczas aktualizacji wyzwań:", error);
+    }
+  },
+
+  async handleTicketMessage(message) {
+    try {
+      const ticket = await Ticket.findOne({
+        guildId: message.guildId,
+        channelId: message.channelId,
+      });
+
+      if (!ticket) return;
+
+      const config = await TicketConfig.findOne({ guildId: message.guildId });
+      if (!config) return;
+
+      const member = await message.guild.members.fetch(message.author.id);
+      const memberRoles = member.roles.cache.map((role) => role.id);
+      const isStaff = config.isStaff(message.author.id, memberRoles);
+
+      const ticketMessage = new TicketMessage({
+        ticketId: ticket.ticketId,
+        messageId: message.id,
+        channelId: message.channelId,
+        userId: message.author.id,
+        username: message.author.username,
+        content: message.content,
+        attachments: message.attachments.map((att) => ({
+          id: att.id,
+          name: att.name,
+          url: att.url,
+          size: att.size,
+          contentType: att.contentType,
+        })),
+        embeds: message.embeds.map((embed) => ({
+          title: embed.title,
+          description: embed.description,
+          color: embed.color,
+          fields: embed.fields,
+        })),
+        isStaff,
+        isSystem: false,
+      });
+
+      await ticketMessage.save();
+
+      ticket.lastActivity = new Date();
+      ticket.messageCount += 1;
+      await ticket.save();
+
+      if (message.client.ticketAutoClose) {
+        message.client.ticketAutoClose.warningsSent.delete(ticket.ticketId);
+      }
+    } catch (error) {
+      console.error("Błąd podczas logowania wiadomości ticketu:", error);
     }
   },
 };

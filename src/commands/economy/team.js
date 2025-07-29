@@ -168,7 +168,6 @@ module.exports = {
   },
 
   async handleCreate(interaction, userId, guildId) {
-    // Sprawdź czy użytkownik już ma zespół
     const existingTeam = await teamManager.getUserTeam(guildId, userId);
     if (existingTeam) {
       throw new Error(
@@ -224,7 +223,6 @@ module.exports = {
 
     const embed = teamManager.createTeamEmbed(team);
 
-    // Dodaj ID zespołu dla łatwego udostępniania
     embed.addFields([
       { name: "🆔 ID zespołu", value: `\`${team.teamId}\``, inline: true },
     ]);
@@ -275,7 +273,6 @@ module.exports = {
       throw new Error("Zespół jest pełny.");
     }
 
-    // Sprawdź czy użytkownik już należy do innego zespołu
     const targetUserTeam = await teamManager.getUserTeam(
       guildId,
       targetUser.id
@@ -319,7 +316,6 @@ module.exports = {
   async handleJoin(interaction, userId, guildId) {
     const teamId = interaction.options.getString("team_id");
 
-    // Sprawdź czy użytkownik już należy do zespołu
     const existingTeam = await teamManager.getUserTeam(guildId, userId);
     if (existingTeam) {
       throw new Error(

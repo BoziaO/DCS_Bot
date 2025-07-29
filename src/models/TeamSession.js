@@ -62,7 +62,6 @@ const teamSessionSchema = new mongoose.Schema({
     },
   ],
 
-  // Hunt-specific data
   huntData: {
     targetGhost: {
       type: mongoose.Schema.Types.Mixed,
@@ -99,7 +98,6 @@ const teamSessionSchema = new mongoose.Schema({
     },
   },
 
-  // Investigation-specific data
   investigationData: {
     location: {
       type: mongoose.Schema.Types.Mixed,
@@ -142,7 +140,7 @@ const teamSessionSchema = new mongoose.Schema({
     },
     maxWaitTime: {
       type: Number,
-      default: 300000, // 5 minutes
+      default: 300000,
     },
   },
 
@@ -153,21 +151,18 @@ const teamSessionSchema = new mongoose.Schema({
   startedAt: Date,
   completedAt: Date,
 
-  // Auto-expire sessions after 2 hours
   expiresAt: {
     type: Date,
     default: Date.now,
-    expires: 7200, // 2 hours
+    expires: 7200,
   },
 });
 
-// Indeksy
 teamSessionSchema.index({ sessionId: 1 });
 teamSessionSchema.index({ teamId: 1, status: 1 });
 teamSessionSchema.index({ guildId: 1, channelId: 1 });
 teamSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// Metody pomocnicze
 teamSessionSchema.methods.addParticipant = function (userId) {
   if (this.participants.some((p) => p.userId === userId)) {
     throw new Error("User is already a participant");
@@ -209,12 +204,10 @@ teamSessionSchema.methods.addEvidence = function (userId, evidence) {
     throw new Error("User is not a participant");
   }
 
-  // Add to shared evidence if not already present
   if (!this.huntData.sharedEvidence.includes(evidence)) {
     this.huntData.sharedEvidence.push(evidence);
   }
 
-  // Add to participant's contribution
   if (!participant.contribution.evidenceFound.includes(evidence)) {
     participant.contribution.evidenceFound.push(evidence);
   }
@@ -267,7 +260,6 @@ teamSessionSchema.methods.start = function () {
   this.status = "active";
   this.startedAt = new Date();
 
-  // Update all participants to active
   this.participants.forEach((p) => {
     p.status = "active";
   });

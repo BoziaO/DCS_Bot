@@ -19,9 +19,9 @@ const ticketConfigSchema = new Schema(
       type: String,
     },
     staffRoles: {
-      admin: [String], // Administratorzy - pełne uprawnienia
-      moderator: [String], // Moderatorzy - mogą zamykać i przypisywać
-      support: [String], // Podstawowy personel - może odpowiadać
+      admin: [String],
+      moderator: [String],
+      support: [String],
     },
     ticketCount: {
       type: Number,
@@ -59,17 +59,20 @@ const ticketConfigSchema = new Schema(
         default: true,
       },
     },
-    categories: [{
-      id: String,
-      name: String,
-      description: String,
-      emoji: String,
-      color: String,
-      assignedRoles: [String], // Role które mogą być przypisane do tej kategorii
-    }],
+    categories: [
+      {
+        id: String,
+        name: String,
+        description: String,
+        emoji: String,
+        color: String,
+        assignedRoles: [String],
+      },
+    ],
     welcomeMessage: {
       type: String,
-      default: "Witaj! Opisz swój problem, a członek personelu wkrótce się z Tobą skontaktuje.",
+      default:
+        "Witaj! Opisz swój problem, a członek personelu wkrótce się z Tobą skontaktuje.",
     },
     maxTicketsPerUser: {
       type: Number,
@@ -80,31 +83,35 @@ const ticketConfigSchema = new Schema(
       default: false,
     },
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
   }
 );
 
-// Metody pomocnicze
-ticketConfigSchema.methods.isStaff = function(userId, roleIds) {
+ticketConfigSchema.methods.isStaff = function (userId, roleIds) {
   const allStaffRoles = [
     ...this.staffRoles.admin,
     ...this.staffRoles.moderator,
-    ...this.staffRoles.support
+    ...this.staffRoles.support,
   ];
-  return roleIds.some(roleId => allStaffRoles.includes(roleId));
+  return roleIds.some((roleId) => allStaffRoles.includes(roleId));
 };
 
-ticketConfigSchema.methods.hasPermission = function(userId, roleIds, permission) {
+ticketConfigSchema.methods.hasPermission = function (
+  userId,
+  roleIds,
+  permission
+) {
   switch (permission) {
-    case 'admin':
-      return roleIds.some(roleId => this.staffRoles.admin.includes(roleId));
-    case 'moderate':
-      return roleIds.some(roleId => 
-        this.staffRoles.admin.includes(roleId) || 
-        this.staffRoles.moderator.includes(roleId)
+    case "admin":
+      return roleIds.some((roleId) => this.staffRoles.admin.includes(roleId));
+    case "moderate":
+      return roleIds.some(
+        (roleId) =>
+          this.staffRoles.admin.includes(roleId) ||
+          this.staffRoles.moderator.includes(roleId)
       );
-    case 'support':
+    case "support":
       return this.isStaff(userId, roleIds);
     default:
       return false;

@@ -65,12 +65,12 @@ const ticketRatingSchema = new Schema(
   }
 );
 
-// Indeksy
+
 ticketRatingSchema.index({ guildId: 1, staffId: 1 });
 ticketRatingSchema.index({ rating: 1 });
 ticketRatingSchema.index({ createdAt: 1 });
 
-// Statyczne metody dla statystyk
+
 ticketRatingSchema.statics.getStaffStats = async function(staffId, guildId) {
   const ratings = await this.find({ staffId, guildId });
   

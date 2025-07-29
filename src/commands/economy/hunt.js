@@ -9,6 +9,8 @@ const {
 const Profile = require("../../models/Profile");
 const { ghosts, maps } = require("../../data/phasmophobiaData");
 const { DIFFICULTY_SETTINGS } = require("../../utils/hunt/constants");
+const TeamManager = require("../../utils/team/teamManager");
+const CooperativeHunt = require("../../utils/hunt/cooperativeHunt");
 
 const {
   createMapSelectionEmbed,
@@ -45,6 +47,8 @@ const {
 } = require("../../utils/hunt/huntLogic");
 
 const activeHunts = new Map();
+const teamManager = new TeamManager();
+const cooperativeHunt = new CooperativeHunt();
 
 /**
  * Tworzy domyślny profil użytkownika
@@ -222,10 +226,22 @@ module.exports = {
           { name: "🔴 Profesjonalny (Trudny)", value: "professional" },
           { name: "⚫ Koszmar (Ekstremalny)", value: "nightmare" }
         )
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("team")
+        .setDescription("Rozpocznij polowanie zespołowe (wymaga zespołu)")
+        .setRequired(false)
     ),
 
   async execute(interaction) {
     try {
+      const isTeamHunt = interaction.options.getBoolean("team") || false;
+
+      if (isTeamHunt) {
+        return await this.handleTeamHunt(interaction);
+      }
+
       if (activeHunts.has(interaction.user.id)) {
         return interaction.reply({
           content:
@@ -971,5 +987,128 @@ async function startInteractiveHunt(
       embeds: [],
       components: [],
     });
+  }
+}
+
+async function handleTeamHunt(interaction) {
+  try {
+    const userId = interaction.user.id;
+    const guildId = interaction.guild.id;
+
+    const team = await teamManager.getUserTeam(guildId, userId);
+    if (!team) {
+      const embed = new EmbedBuilder()
+        .setTitle("❌ Brak zespołu")
+        .setDescription(
+          "Nie należysz do żadnego zespołu!\n\n" +
+            "Aby rozpocząć polowanie zespołowe:\n" +
+            "• Użyj `/team create` aby utworzyć zespół\n" +
+            "• Lub `/team join` aby dołączyć do istniejącego zespołu"
+        )
+        .setColor("#e74c3c");
+
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (!team.isLeader(userId)) {
+      const embed = new EmbedBuilder()
+        .setTitle("❌ Brak uprawnień")
+        .setDescription(
+          "Tylko lider zespołu może rozpocząć polowanie zespołowe."
+        )
+        .setColor("#e74c3c");
+
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    if (team.getMemberCount() < 2) {
+      const embed = new EmbedBuilder()
+        .setTitle("❌ Za mało członków")
+        .setDescription(
+          "Zespół musi mieć co najmniej 2 członków aby rozpocząć polowanie zespołowe."
+        )
+        .setColor("#e74c3c");
+
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    const existingSession = await teamManager.getActiveSession(
+      `team_${team.teamId}`
+    );
+    if (existingSession) {
+      const embed = new EmbedBuilder()
+        .setTitle("❌ Aktywna sesja")
+        .setDescription(
+          "Zespół ma już aktywną sesję polowania. Zakończ ją przed rozpoczęciem nowej."
+        )
+        .setColor("#e74c3c");
+
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+
+    const preselectedDifficulty = interaction.options.getString("difficulty");
+
+    const embed = new EmbedBuilder()
+      .setTitle("🎯 Polowanie zespołowe")
+      .setDescription(
+        `**Zespół:** ${team.name}\n` +
+          `**Członkowie:** ${team.getMemberCount()}/${team.maxMembers}\n\n` +
+          `Rozpoczynasz przygotowania do zespołowego polowania na duchy!\n` +
+          `Wszyscy członkowie zespołu będą mogli uczestniczyć w polowaniu.`
+      )
+      .addFields([
+        {
+          name: "👥 Członkowie zespołu",
+          value: team.members.map((m) => `<@${m.userId}>`).join("\n"),
+          inline: true,
+        },
+        {
+          name: "⚙️ Ustawienia zespołu",
+          value:
+            `💰 Dzielenie nagród: ${
+              team.settings.shareRewards ? "✅" : "❌"
+            }\n` +
+            `🔍 Dzielenie dowodów: ${
+              team.settings.shareEvidence ? "✅" : "❌"
+            }`,
+          inline: true,
+        },
+      ])
+      .setColor("#3498db")
+      .setTimestamp();
+
+    const actionRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`team_hunt_start_${team.teamId}`)
+        .setLabel("Rozpocznij przygotowania")
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji("🚀"),
+      new ButtonBuilder()
+        .setCustomId(`team_hunt_cancel_${team.teamId}`)
+        .setLabel("Anuluj")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji("❌")
+    );
+
+    await interaction.reply({
+      content: team.members.map((m) => `<@${m.userId}>`).join(" "),
+      embeds: [embed],
+      components: [actionRow],
+    });
+  } catch (error) {
+    console.error("Team hunt error:", error);
+
+    const errorEmbed = new EmbedBuilder()
+      .setTitle("❌ Błąd")
+      .setDescription(
+        "Wystąpił błąd podczas przygotowywania polowania zespołowego."
+      )
+      .setColor("#e74c3c");
+
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply({ embeds: [errorEmbed] });
+    } else {
+      await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+    }
   }
 }

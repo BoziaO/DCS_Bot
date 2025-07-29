@@ -375,6 +375,14 @@ const initializeBot = async () => {
       colors.magenta
     );
     await client.login(token);
+
+    await logWithAnimation(
+      "🎫 Initializing ticket auto-close system...",
+      colors.cyan
+    );
+    const TicketAutoClose = require("./utils/ticketAutoClose");
+    client.ticketAutoClose = new TicketAutoClose(client);
+    client.ticketAutoClose.start();
   } catch (error) {
     console.error(
       `${colors.red}[FATAL] Failed to initialize bot:${colors.reset}`,

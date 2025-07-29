@@ -5,7 +5,7 @@ const ticketAssignmentSchema = new Schema(
     ticketId: {
       type: String,
       required: true,
-      ref: 'Ticket'
+      ref: "Ticket",
     },
     assignedTo: {
       type: String,
@@ -28,44 +28,47 @@ const ticketAssignmentSchema = new Schema(
     },
     workload: {
       type: Number,
-      default: 1, // Waga zadania dla obliczania obciążenia
+      default: 1,
     },
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
   }
 );
 
-// Indeksy
 ticketAssignmentSchema.index({ ticketId: 1 });
 ticketAssignmentSchema.index({ assignedTo: 1, isActive: 1 });
 ticketAssignmentSchema.index({ assignedAt: 1 });
 
-// Statyczne metody
-ticketAssignmentSchema.statics.getActiveAssignments = function(userId) {
+ticketAssignmentSchema.statics.getActiveAssignments = function (userId) {
   return this.find({ assignedTo: userId, isActive: true });
 };
 
-ticketAssignmentSchema.statics.getUserWorkload = async function(userId) {
+ticketAssignmentSchema.statics.getUserWorkload = async function (userId) {
   const assignments = await this.find({ assignedTo: userId, isActive: true });
-  return assignments.reduce((total, assignment) => total + assignment.workload, 0);
+  return assignments.reduce(
+    (total, assignment) => total + assignment.workload,
+    0
+  );
 };
 
-ticketAssignmentSchema.statics.getAvailableStaff = async function(staffIds, maxWorkload = 5) {
+ticketAssignmentSchema.statics.getAvailableStaff = async function (
+  staffIds,
+  maxWorkload = 5
+) {
   const workloads = await Promise.all(
     staffIds.map(async (staffId) => ({
       userId: staffId,
-      workload: await this.getUserWorkload(staffId)
+      workload: await this.getUserWorkload(staffId),
     }))
   );
-  
+
   return workloads
-    .filter(staff => staff.workload < maxWorkload)
+    .filter((staff) => staff.workload < maxWorkload)
     .sort((a, b) => a.workload - b.workload);
 };
 
-// Metoda do zakończenia przypisania
-ticketAssignmentSchema.methods.unassign = function(unassignedBy, reason) {
+ticketAssignmentSchema.methods.unassign = function (unassignedBy, reason) {
   this.isActive = false;
   this.unassignedAt = new Date();
   this.unassignedBy = unassignedBy;

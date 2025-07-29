@@ -9,6 +9,45 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Dodane
 
+- 🎫 **Kompletny zaawansowany system ticketów**
+  - Historia i logi wszystkich wiadomości w ticketach
+  - Transkrypty rozmów w formatach TXT, HTML, JSON
+  - Automatyczne zamykanie nieaktywnych ticketów z ostrzeżeniami
+  - System ocen obsługi po zamknięciu ticketu (1-5 gwiazdek)
+  - Powiadomienia DM dla personelu o nowych ticketach i przypisaniach
+  - Szczegółowe statystyki i raporty wydajności personelu
+  - System ról personelu (Administrator, Moderator, Wsparcie)
+  - Zarządzanie priorytetami ticketów (Niski/Średni/Wysoki/Krytyczny)
+  - Eksport danych do analizy w różnych formatach
+  - Automatyczne archiwizowanie zamkniętych ticketów
+
+- 📊 **Nowe modele danych dla systemu ticketów**
+  - `TicketMessage` - przechowywanie wszystkich wiadomości
+  - `TicketAssignment` - historia przypisań personelu
+  - `TicketRating` - system ocen z kategoriami szczegółowymi
+  - `TicketStats` - statystyki i raporty systemu
+  - `TicketConfig` - zaawansowana konfiguracja systemu
+
+- 🎯 **Nowe komendy systemu ticketów**
+  - `/setup-tickets` - pierwsza konfiguracja systemu
+  - `/ticket-config` - zarządzanie konfiguracją (auto-close, powiadomienia, limity, role)
+  - `/assign-ticket` - przypisywanie ticketów do personelu
+  - `/unassign-ticket` - odprzypisywanie ticketów
+  - `/set-priority` - zmiana priorytetu ticketów
+  - `/close-ticket` - zamykanie ticketów z powodem
+  - `/ticket-info` - szczegółowe informacje o tickecie
+  - `/list-tickets` - lista ticketów z filtrami
+  - `/ticket-stats` - statystyki systemu i personelu
+  - `/export-transcript` - eksport transkryptów
+  - `/generate-report` - generowanie szczegółowych raportów
+
+- 🤖 **Automatyczne funkcje systemu ticketów**
+  - System auto-close sprawdzający nieaktywność co 30 minut
+  - Automatyczne logowanie wszystkich wiadomości w ticketach
+  - Powiadomienia DM o krytycznych priorytetach dla administratorów
+  - Automatyczne wysyłanie próśb o ocenę po zamknięciu ticketu
+  - Rozróżnienie wiadomości personelu, użytkowników i systemu
+
 - Przycisk powrotu w embedzie zebranych dowodów w komendzie hunt
 - Ulepszona dokumentacja README.md z szczegółową strukturą projektu
 - Dodano CHANGELOG.md do śledzenia zmian
@@ -26,8 +65,22 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Zmienione
 
+- Zaktualizowano `interactionCreate.js` o obsługę nowych interakcji systemu ticketów
+- Zaktualizowano `messageCreate.js` o automatyczne logowanie wiadomości w ticketach
+- Rozdzielono stary system ticketów od nowego (zachowano kompatybilność wsteczną)
 - Zaktualizowano strukturę projektu w dokumentacji
 - Poprawiono spójność obsługi inventory w całym projekcie
+
+### Techniczne
+
+- **Nowa struktura plików systemu ticketów**:
+  - `src/models/tickets/` - modele podzielone na osobne pliki
+  - `src/commands/tickets/` - komendy podzielone funkcjonalnie
+  - `src/handlers/ticketHandler.js` - główny handler interakcji
+  - `src/utils/ticketAutoClose.js` - system automatycznego zamykania
+- **Integracja z istniejącym systemem** - zachowano kompatybilność ze starym systemem ticketów
+- **Optymalizacja wydajności** - efektywne zapytania do bazy danych
+- **Skalowalna architektura** - łatwe dodawanie nowych funkcji
 
 ## [1.1.535] - 28.07.2025
 

@@ -5,7 +5,7 @@ const ticketMessageSchema = new Schema(
     ticketId: {
       type: String,
       required: true,
-      ref: 'Ticket'
+      ref: "Ticket",
     },
     messageId: {
       type: String,
@@ -27,23 +27,29 @@ const ticketMessageSchema = new Schema(
       type: String,
       required: true,
     },
-    attachments: [{
-      id: String,
-      name: String,
-      url: String,
-      size: Number,
-      contentType: String,
-    }],
-    embeds: [{
-      title: String,
-      description: String,
-      color: String,
-      fields: [{
+    attachments: [
+      {
+        id: String,
         name: String,
-        value: String,
-        inline: Boolean,
-      }],
-    }],
+        url: String,
+        size: Number,
+        contentType: String,
+      },
+    ],
+    embeds: [
+      {
+        title: String,
+        description: String,
+        color: String,
+        fields: [
+          {
+            name: String,
+            value: String,
+            inline: Boolean,
+          },
+        ],
+      },
+    ],
     isStaff: {
       type: Boolean,
       default: false,
@@ -54,29 +60,27 @@ const ticketMessageSchema = new Schema(
     },
     editedAt: Date,
     deletedAt: Date,
-    reactions: [{
-      emoji: String,
-      count: Number,
-      users: [String],
-    }],
+    reactions: [
+      {
+        emoji: String,
+        count: Number,
+        users: [String],
+      },
+    ],
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
   }
 );
 
-// Indeksy
 ticketMessageSchema.index({ ticketId: 1, createdAt: 1 });
 ticketMessageSchema.index({ userId: 1 });
 ticketMessageSchema.index({ messageId: 1 });
 
-// Metoda do tworzenia transkryptu
-ticketMessageSchema.statics.getTranscript = async function(ticketId) {
-  const messages = await this.find({ ticketId })
-    .sort({ createdAt: 1 })
-    .lean();
-  
-  return messages.map(msg => ({
+ticketMessageSchema.statics.getTranscript = async function (ticketId) {
+  const messages = await this.find({ ticketId }).sort({ createdAt: 1 }).lean();
+
+  return messages.map((msg) => ({
     timestamp: msg.createdAt,
     author: msg.username,
     content: msg.content,

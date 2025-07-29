@@ -16,7 +16,7 @@ class CooperativeInvestigation {
     this.findManager = new FindManager();
     this.equipmentManager = new EquipmentManager();
     this.teamManager = new TeamManager();
-    this.cooldownTime = parseDuration("2m"); // Shorter cooldown for team investigations
+    this.cooldownTime = parseDuration("2m");
   }
 
   /**
@@ -168,11 +168,9 @@ class CooperativeInvestigation {
     const teamSize = teamSession.participants.length;
     const teamLevel = this.calculateTeamLevel(teamSession.participants);
 
-    // Bonus zespołowy zwiększa szanse na lepsze znaleziska
     const teamBonus = this.calculateTeamBonus(teamSize);
     const enhancedMultiplier = location.baseMultiplier * (1 + teamBonus);
 
-    // Każdy członek zespołu ma szansę na znalezienie czegoś
     const teamFinds = [];
     let totalRewards = { money: 0, items: [], experience: 0 };
     let totalSanityChange = 0;
@@ -184,10 +182,9 @@ class CooperativeInvestigation {
       );
       let result = this.findManager.processFind(find, selectedArea, location, {
         level: teamLevel,
-        inventory: new Map(), // Simplified for team processing
+        inventory: new Map(),
       });
 
-      // Aplikuj bonusy sprzętu zespołowego
       const teamEquipmentBonuses = this.calculateTeamEquipmentBonuses(
         teamSession.participants
       );
@@ -204,23 +201,19 @@ class CooperativeInvestigation {
             : teamSession.participants[i]?.userId || initiatorId,
       });
 
-      // Sumuj nagrody
       totalRewards.money += result.rewards.money;
       totalRewards.experience += result.rewards.experience;
       totalRewards.items.push(...result.rewards.items);
       totalSanityChange += result.sanityChange;
     }
 
-    // Dodaj bonus zespołowy do nagród
     totalRewards.money = Math.floor(totalRewards.money * (1 + teamBonus));
     totalRewards.experience = Math.floor(
       totalRewards.experience * (1 + teamBonus)
     );
 
-    // Zmniejsz utratę poczytalności dzięki wsparciu zespołu
-    totalSanityChange = Math.floor(totalSanityChange * 0.7); // 30% mniej utraty poczytalności
+    totalSanityChange = Math.floor(totalSanityChange * 0.7);
 
-    // Aktualizuj dane sesji
     teamSession.investigationData.sharedFinds.push(...teamFinds);
     teamSession.investigationData.totalEarnings += totalRewards.money;
     teamSession.investigationData.totalExperience += totalRewards.experience;
@@ -229,7 +222,6 @@ class CooperativeInvestigation {
 
     await teamSession.save();
 
-    // Zastosuj nagrody do wszystkich uczestników
     await this.distributeTeamRewards(
       teamSession,
       totalRewards,
@@ -263,10 +255,10 @@ class CooperativeInvestigation {
    */
   calculateTeamBonus(teamSize) {
     const bonuses = {
-      2: 0.25, // 25% bonus for 2 members
-      3: 0.4, // 40% bonus for 3 members
-      4: 0.55, // 55% bonus for 4 members
-      5: 0.65, // 65% bonus for 5+ members
+      2: 0.25,
+      3: 0.4,
+      4: 0.55,
+      5: 0.65,
     };
     return bonuses[Math.min(teamSize, 5)] || bonuses[5];
   }
@@ -277,7 +269,6 @@ class CooperativeInvestigation {
   calculateTeamEquipmentBonuses(participants) {
     const allEquipment = new Map();
 
-    // Zbierz wszystkie wyposażenie zespołu
     participants.forEach((participant) => {
       if (participant.inventory && participant.inventory instanceof Map) {
         for (const [item, quantity] of participant.inventory) {
@@ -303,7 +294,6 @@ class CooperativeInvestigation {
       sanityChange: Math.floor(totalSanityChange / participants.length),
     };
 
-    // Dystrybuuj przedmioty losowo między członków zespołu
     const itemDistribution = new Map();
     totalRewards.items.forEach((item) => {
       const randomMember =
@@ -313,8 +303,6 @@ class CooperativeInvestigation {
       itemDistribution.set(randomMember.userId, memberItems);
     });
 
-    // Tutaj normalnie aktualizowalibyśmy profile użytkowników
-    // Dla uproszczenia, zwracamy informacje o dystrybucji
     return {
       rewardsPerMember,
       itemDistribution,
@@ -366,7 +354,6 @@ class CooperativeInvestigation {
       ])
       .setTimestamp();
 
-    // Dodaj szczegóły znalezisk
     if (teamFinds.length > 0) {
       const findsText = teamFinds
         .slice(0, 5)
@@ -388,7 +375,6 @@ class CooperativeInvestigation {
       ]);
     }
 
-    // Dodaj statystyki obszarów
     const searchedAreas = teamSession.investigationData.areasSearched || [];
     if (searchedAreas.length > 0) {
       embed.addFields([

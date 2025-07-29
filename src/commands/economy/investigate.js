@@ -1,6 +1,8 @@
 const { SlashCommandBuilder } = require("discord.js");
 const Profile = require("../../models/Profile");
 const InvestigateCore = require("../../utils/investigate/investigateCore");
+const TeamManager = require("../../utils/team/teamManager");
+const CooperativeInvestigation = require("../../utils/investigate/cooperativeInvestigation");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -25,10 +27,22 @@ module.exports = {
           { name: "🚜 Gospodarstwo", value: "farmhouse" }
         )
         .setRequired(false)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("team")
+        .setDescription("Rozpocznij śledztwo zespołowe (wymaga zespołu)")
+        .setRequired(false)
     ),
 
   async execute(interaction) {
     await interaction.deferReply();
+
+    const isTeamInvestigation = interaction.options.getBoolean("team") || false;
+
+    if (isTeamInvestigation) {
+      return await this.handleTeamInvestigation(interaction);
+    }
 
     const investigateCore = new InvestigateCore();
 
@@ -183,6 +197,111 @@ module.exports = {
         content: "❌ Wystąpił błąd podczas zwiadu. Spróbuj ponownie później.",
         embeds: [],
         components: [],
+      });
+    }
+  },
+
+  async handleTeamInvestigation(interaction) {
+    try {
+      const userId = interaction.user.id;
+      const guildId = interaction.guild.id;
+      const teamManager = new TeamManager();
+      const cooperativeInvestigation = new CooperativeInvestigation();
+
+      const team = await teamManager.getUserTeam(guildId, userId);
+      if (!team) {
+        return interaction.editReply({
+          content:
+            "❌ **Brak zespołu**\n\n" +
+            "Nie należysz do żadnego zespołu!\n\n" +
+            "Aby rozpocząć śledztwo zespołowe:\n" +
+            "• Użyj `/team create` aby utworzyć zespół\n" +
+            "• Lub `/team join` aby dołączyć do istniejącego zespołu",
+          ephemeral: true,
+        });
+      }
+
+      if (!team.isLeader(userId)) {
+        return interaction.editReply({
+          content:
+            "❌ **Brak uprawnień**\n\nTylko lider zespołu może rozpocząć śledztwo zespołowe.",
+          ephemeral: true,
+        });
+      }
+
+      if (team.getMemberCount() < 2) {
+        return interaction.editReply({
+          content:
+            "❌ **Za mało członków**\n\nZespół musi mieć co najmniej 2 członków aby rozpocząć śledztwo zespołowe.",
+          ephemeral: true,
+        });
+      }
+
+      const existingSession = await teamManager.getActiveSession(
+        `team_investigation_${team.teamId}`
+      );
+      if (existingSession) {
+        return interaction.editReply({
+          content:
+            "❌ **Aktywna sesja**\n\nZespół ma już aktywną sesję śledztwa. Zakończ ją przed rozpoczęciem nowej.",
+          ephemeral: true,
+        });
+      }
+
+      const locationType = interaction.options.getString("type");
+
+      let locations;
+      if (locationType) {
+        locations = cooperativeInvestigation.getLocationsByType(locationType);
+      } else {
+        locations = cooperativeInvestigation.getLocationsByDifficulty("medium");
+      }
+
+      if (!locations || locations.length === 0) {
+        return interaction.editReply({
+          content:
+            "❌ **Błąd**\n\nNie znaleziono dostępnych lokacji dla tego typu.",
+          ephemeral: true,
+        });
+      }
+
+      const selectedLocation =
+        locations[Math.floor(Math.random() * locations.length)];
+
+      const teamSession = await teamManager.createTeamSession(
+        team.teamId,
+        interaction.channel.id,
+        "investigation",
+        {
+          location: selectedLocation,
+          shareRewards: team.settings.shareRewards,
+          shareEvidence: team.settings.shareEvidence,
+        }
+      );
+
+      await teamSession.addParticipant(userId);
+
+      const locationEmbed = cooperativeInvestigation.createTeamLocationEmbed(
+        selectedLocation,
+        teamSession
+      );
+      const confirmationButtons =
+        cooperativeInvestigation.createTeamConfirmationButtons(
+          teamSession.sessionId
+        );
+
+      await interaction.editReply({
+        content: team.members.map((m) => `<@${m.userId}>`).join(" "),
+        embeds: [locationEmbed],
+        components: [confirmationButtons],
+      });
+    } catch (error) {
+      console.error("Team investigation error:", error);
+
+      await interaction.editReply({
+        content:
+          "❌ **Błąd**\n\nWystąpił błąd podczas przygotowywania śledztwa zespołowego.",
+        ephemeral: true,
       });
     }
   },

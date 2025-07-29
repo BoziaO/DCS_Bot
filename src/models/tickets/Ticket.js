@@ -84,35 +84,31 @@ const ticketSchema = new Schema(
       default: false,
     },
   },
-  { 
+  {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
   }
 );
 
-// Indeksy dla lepszej wydajności
 ticketSchema.index({ guildId: 1, status: 1 });
 ticketSchema.index({ assignedTo: 1 });
 ticketSchema.index({ userId: 1 });
 ticketSchema.index({ lastActivity: 1 });
 
-// Virtual dla czasu trwania ticketu
-ticketSchema.virtual('duration').get(function() {
+ticketSchema.virtual("duration").get(function () {
   if (this.closedBy && this.closedBy.closedAt) {
     return this.closedBy.closedAt - this.createdAt;
   }
   return Date.now() - this.createdAt;
 });
 
-// Metoda do sprawdzania czy ticket jest nieaktywny
-ticketSchema.methods.isInactive = function(hours = 24) {
-  const inactiveTime = hours * 60 * 60 * 1000; // hours to milliseconds
-  return (Date.now() - this.lastActivity) > inactiveTime;
+ticketSchema.methods.isInactive = function (hours = 24) {
+  const inactiveTime = hours * 60 * 60 * 1000;
+  return Date.now() - this.lastActivity > inactiveTime;
 };
 
-// Metoda do aktualizacji ostatniej aktywności
-ticketSchema.methods.updateActivity = function() {
+ticketSchema.methods.updateActivity = function () {
   this.lastActivity = new Date();
   return this.save();
 };

@@ -20,9 +20,11 @@ const TicketRating = require("../models/tickets/TicketRating");
 class TicketHandler {
   static async handleCategorySelect(interaction) {
     const category = interaction.values[0];
-    
+
     try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
+      const config = await TicketConfig.findOne({
+        guildId: interaction.guildId,
+      });
       if (!config) {
         return interaction.reply({
           content: "❌ System ticketów nie jest skonfigurowany.",
@@ -30,11 +32,10 @@ class TicketHandler {
         });
       }
 
-      // Sprawdź limit ticketów na użytkownika
       const userTickets = await Ticket.countDocuments({
         guildId: interaction.guildId,
         userId: interaction.user.id,
-        status: { $in: ['open', 'assigned', 'pending'] }
+        status: { $in: ["open", "assigned", "pending"] },
       });
 
       if (userTickets >= config.maxTicketsPerUser) {
@@ -44,7 +45,6 @@ class TicketHandler {
         });
       }
 
-      // Utwórz modal do szczegółów ticketu
       const modal = new ModalBuilder()
         .setCustomId(`ticket_modal_${category}`)
         .setTitle("Utwórz Nowy Ticket");
@@ -61,7 +61,9 @@ class TicketHandler {
         .setCustomId("ticket_description")
         .setLabel("Szczegółowy opis")
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder("Opisz szczegółowo swój problem, pytanie lub zgłoszenie...")
+        .setPlaceholder(
+          "Opisz szczegółowo swój problem, pytanie lub zgłoszenie..."
+        )
         .setRequired(true)
         .setMaxLength(1000);
 
@@ -74,13 +76,16 @@ class TicketHandler {
         .setMaxLength(10);
 
       const firstActionRow = new ActionRowBuilder().addComponents(titleInput);
-      const secondActionRow = new ActionRowBuilder().addComponents(descriptionInput);
-      const thirdActionRow = new ActionRowBuilder().addComponents(priorityInput);
+      const secondActionRow = new ActionRowBuilder().addComponents(
+        descriptionInput
+      );
+      const thirdActionRow = new ActionRowBuilder().addComponents(
+        priorityInput
+      );
 
       modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
 
       await interaction.showModal(modal);
-
     } catch (error) {
       console.error("Błąd podczas obsługi wyboru kategorii:", error);
       await interaction.reply({
@@ -91,32 +96,36 @@ class TicketHandler {
   }
 
   static async handleTicketModal(interaction) {
-    const category = interaction.customId.split('_')[2];
+    const category = interaction.customId.split("_")[2];
     const title = interaction.fields.getTextInputValue("ticket_title");
-    const description = interaction.fields.getTextInputValue("ticket_description");
-    const priorityInput = interaction.fields.getTextInputValue("ticket_priority") || "medium";
-    
-    // Walidacja priorytetu
+    const description =
+      interaction.fields.getTextInputValue("ticket_description");
+    const priorityInput =
+      interaction.fields.getTextInputValue("ticket_priority") || "medium";
+
     const validPriorities = ["low", "medium", "high", "critical"];
-    const priority = validPriorities.includes(priorityInput.toLowerCase()) ? 
-      priorityInput.toLowerCase() : "medium";
+    const priority = validPriorities.includes(priorityInput.toLowerCase())
+      ? priorityInput.toLowerCase()
+      : "medium";
 
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
+      const config = await TicketConfig.findOne({
+        guildId: interaction.guildId,
+      });
       if (!config) {
-        return interaction.editReply("❌ System ticketów nie jest skonfigurowany.");
+        return interaction.editReply(
+          "❌ System ticketów nie jest skonfigurowany."
+        );
       }
 
-      // Zwiększ licznik ticketów
       config.ticketCount += 1;
       await config.save();
 
       const ticketNumber = String(config.ticketCount).padStart(4, "0");
       const ticketId = `${interaction.guildId}-${ticketNumber}`;
 
-      // Utwórz kanał ticketu
       const channel = await interaction.guild.channels.create({
         name: `ticket-${ticketNumber}-${interaction.user.username}`,
         type: ChannelType.GuildText,
@@ -135,8 +144,8 @@ class TicketHandler {
               PermissionFlagsBits.AttachFiles,
             ],
           },
-          // Dodaj uprawnienia dla wszystkich ról personelu
-          ...config.staffRoles.admin.map(roleId => ({
+
+          ...config.staffRoles.admin.map((roleId) => ({
             id: roleId,
             allow: [
               PermissionFlagsBits.ViewChannel,
@@ -146,7 +155,7 @@ class TicketHandler {
               PermissionFlagsBits.ManageMessages,
             ],
           })),
-          ...config.staffRoles.moderator.map(roleId => ({
+          ...config.staffRoles.moderator.map((roleId) => ({
             id: roleId,
             allow: [
               PermissionFlagsBits.ViewChannel,
@@ -155,7 +164,7 @@ class TicketHandler {
               PermissionFlagsBits.AttachFiles,
             ],
           })),
-          ...config.staffRoles.support.map(roleId => ({
+          ...config.staffRoles.support.map((roleId) => ({
             id: roleId,
             allow: [
               PermissionFlagsBits.ViewChannel,
@@ -167,7 +176,6 @@ class TicketHandler {
         ],
       });
 
-      // Zapisz ticket w bazie danych
       const ticket = new Ticket({
         ticketId,
         guildId: interaction.guildId,
@@ -178,34 +186,36 @@ class TicketHandler {
         description,
         category,
         priority,
-        status: 'open',
+        status: "open",
       });
 
       await ticket.save();
 
-      // Utwórz embed ticketu
-      const categoryInfo = config.categories.find(cat => cat.id === category);
+      const categoryInfo = config.categories.find((cat) => cat.id === category);
       const priorityColors = {
         low: "#95a5a6",
-        medium: "#f39c12", 
+        medium: "#f39c12",
         high: "#e67e22",
-        critical: "#e74c3c"
+        critical: "#e74c3c",
       };
 
       const ticketEmbed = new EmbedBuilder()
         .setTitle(`🎫 Ticket #${ticketNumber}`)
         .setDescription(
-          `**Kategoria:** ${categoryInfo?.emoji || "📝"} ${categoryInfo?.name || category}\n` +
-          `**Priorytet:** ${this.getPriorityEmoji(priority)} ${priority.toUpperCase()}\n` +
-          `**Użytkownik:** ${interaction.user}\n` +
-          `**Tytuł:** ${title}\n\n` +
-          `**Opis:**\n${description}`
+          `**Kategoria:** ${categoryInfo?.emoji || "📝"} ${
+            categoryInfo?.name || category
+          }\n` +
+            `**Priorytet:** ${this.getPriorityEmoji(
+              priority
+            )} ${priority.toUpperCase()}\n` +
+            `**Użytkownik:** ${interaction.user}\n` +
+            `**Tytuł:** ${title}\n\n` +
+            `**Opis:**\n${description}`
         )
         .setColor(priorityColors[priority] || "#3498db")
         .setTimestamp()
         .setFooter({ text: `Ticket ID: ${ticketId}` });
 
-      // Przyciski akcji
       const actionButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("ticket_claim")
@@ -224,15 +234,16 @@ class TicketHandler {
           .setEmoji("⚡")
       );
 
-      // Wyślij wiadomość w kanale ticketu
       const staffRolesToMention = [
         ...config.staffRoles.admin,
         ...config.staffRoles.moderator,
-        ...config.staffRoles.support
+        ...config.staffRoles.support,
       ];
 
-      const mentionText = staffRolesToMention.length > 0 ? 
-        staffRolesToMention.map(roleId => `<@&${roleId}>`).join(" ") : "";
+      const mentionText =
+        staffRolesToMention.length > 0
+          ? staffRolesToMention.map((roleId) => `<@&${roleId}>`).join(" ")
+          : "";
 
       await channel.send({
         content: `${mentionText}\n\n${config.welcomeMessage}`,
@@ -240,7 +251,6 @@ class TicketHandler {
         components: [actionButtons],
       });
 
-      // Zapisz wiadomość systemową
       const systemMessage = new TicketMessage({
         ticketId,
         messageId: `system_${Date.now()}`,
@@ -253,30 +263,36 @@ class TicketHandler {
 
       await systemMessage.save();
 
-      // Odpowiedź dla użytkownika
       await interaction.editReply({
         content: `✅ Twój ticket został pomyślnie utworzony! Przejdź do ${channel} aby kontynuować.`,
       });
 
-      // Wyślij powiadomienia do personelu (DM)
       if (config.notifications.newTicket) {
-        await this.sendStaffNotifications(interaction.guild, config, ticket, "new");
+        await this.sendStaffNotifications(
+          interaction.guild,
+          config,
+          ticket,
+          "new"
+        );
       }
-
     } catch (error) {
       console.error("Błąd podczas tworzenia ticketu:", error);
-      await interaction.editReply("❌ Wystąpił błąd podczas tworzenia ticketu. Sprawdź uprawnienia bota.");
+      await interaction.editReply(
+        "❌ Wystąpił błąd podczas tworzenia ticketu. Sprawdź uprawnienia bota."
+      );
     }
   }
 
   static async handleTicketClaim(interaction) {
     try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
+      const config = await TicketConfig.findOne({
+        guildId: interaction.guildId,
+      });
       if (!config) return;
 
-      const ticket = await Ticket.findOne({ 
-        guildId: interaction.guildId, 
-        channelId: interaction.channelId 
+      const ticket = await Ticket.findOne({
+        guildId: interaction.guildId,
+        channelId: interaction.channelId,
       });
 
       if (!ticket) {
@@ -286,8 +302,7 @@ class TicketHandler {
         });
       }
 
-      // Sprawdź czy użytkownik jest personelem
-      const memberRoles = interaction.member.roles.cache.map(role => role.id);
+      const memberRoles = interaction.member.roles.cache.map((role) => role.id);
       if (!config.isStaff(interaction.user.id, memberRoles)) {
         return interaction.reply({
           content: "❌ Tylko personel może przejmować tickety.",
@@ -295,7 +310,6 @@ class TicketHandler {
         });
       }
 
-      // Sprawdź czy ticket nie jest już przypisany
       if (ticket.assignedTo && ticket.assignedTo.userId) {
         return interaction.reply({
           content: `❌ Ten ticket jest już przypisany do <@${ticket.assignedTo.userId}>.`,
@@ -303,19 +317,17 @@ class TicketHandler {
         });
       }
 
-      // Przypisz ticket
       ticket.assignedTo = {
         userId: interaction.user.id,
         username: interaction.user.username,
         assignedAt: new Date(),
         assignedBy: interaction.user.id,
       };
-      ticket.status = 'assigned';
+      ticket.status = "assigned";
       ticket.lastActivity = new Date();
 
       await ticket.save();
 
-      // Utwórz rekord przypisania
       const assignment = new TicketAssignment({
         ticketId: ticket.ticketId,
         assignedTo: interaction.user.id,
@@ -331,7 +343,6 @@ class TicketHandler {
         .setTimestamp();
 
       await interaction.reply({ embeds: [claimEmbed] });
-
     } catch (error) {
       console.error("Błąd podczas przejmowania ticketu:", error);
       await interaction.reply({
@@ -343,12 +354,14 @@ class TicketHandler {
 
   static async handleTicketClose(interaction) {
     try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
+      const config = await TicketConfig.findOne({
+        guildId: interaction.guildId,
+      });
       if (!config) return;
 
-      const ticket = await Ticket.findOne({ 
-        guildId: interaction.guildId, 
-        channelId: interaction.channelId 
+      const ticket = await Ticket.findOne({
+        guildId: interaction.guildId,
+        channelId: interaction.channelId,
       });
 
       if (!ticket) {
@@ -358,10 +371,11 @@ class TicketHandler {
         });
       }
 
-      // Sprawdź uprawnienia
-      const memberRoles = interaction.member.roles.cache.map(role => role.id);
+      const memberRoles = interaction.member.roles.cache.map((role) => role.id);
       const isOwner = ticket.userId === interaction.user.id;
-      const canClose = config.hasPermission(interaction.user.id, memberRoles, 'moderate') || isOwner;
+      const canClose =
+        config.hasPermission(interaction.user.id, memberRoles, "moderate") ||
+        isOwner;
 
       if (!canClose) {
         return interaction.reply({
@@ -370,7 +384,6 @@ class TicketHandler {
         });
       }
 
-      // Modal z powodem zamknięcia
       const modal = new ModalBuilder()
         .setCustomId("ticket_close_modal")
         .setTitle("Zamknij Ticket");
@@ -387,7 +400,6 @@ class TicketHandler {
       modal.addComponents(actionRow);
 
       await interaction.showModal(modal);
-
     } catch (error) {
       console.error("Błąd podczas zamykania ticketu:", error);
       await interaction.reply({
@@ -399,25 +411,25 @@ class TicketHandler {
 
   static async handleCloseModal(interaction) {
     const reason = interaction.fields.getTextInputValue("close_reason");
-    
+
     await interaction.deferReply();
 
     try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
-      const ticket = await Ticket.findOne({ 
-        guildId: interaction.guildId, 
-        channelId: interaction.channelId 
+      const config = await TicketConfig.findOne({
+        guildId: interaction.guildId,
+      });
+      const ticket = await Ticket.findOne({
+        guildId: interaction.guildId,
+        channelId: interaction.channelId,
       });
 
       if (!ticket) {
         return interaction.editReply("❌ Nie znaleziono ticketu.");
       }
 
-      // Utwórz transkrypt
       const transcript = await this.createTranscript(ticket.ticketId);
-      
-      // Zaktualizuj ticket
-      ticket.status = 'closed';
+
+      ticket.status = "closed";
       ticket.closedBy = {
         userId: interaction.user.id,
         username: interaction.user.username,
@@ -427,35 +439,36 @@ class TicketHandler {
 
       await ticket.save();
 
-      // Zakończ przypisanie jeśli istnieje
       if (ticket.assignedTo && ticket.assignedTo.userId) {
         await TicketAssignment.findOneAndUpdate(
           { ticketId: ticket.ticketId, isActive: true },
-          { 
+          {
             isActive: false,
             unassignedAt: new Date(),
             unassignedBy: interaction.user.id,
-            reason: "Ticket zamknięty"
+            reason: "Ticket zamknięty",
           }
         );
       }
 
-      // Wyślij transkrypt do kanału transkryptów
       if (config.transcriptChannelId && transcript) {
-        await this.sendTranscript(interaction.guild, config.transcriptChannelId, ticket, transcript);
+        await this.sendTranscript(
+          interaction.guild,
+          config.transcriptChannelId,
+          ticket,
+          transcript
+        );
       }
 
-      // Wyślij prośbę o ocenę do użytkownika
       await this.sendRatingRequest(interaction.guild, ticket);
 
-      // Zamknij kanał po 10 sekundach
       const closeEmbed = new EmbedBuilder()
         .setTitle("🔒 Ticket Zamknięty")
         .setDescription(
           `**Zamknięty przez:** ${interaction.user}\n` +
-          `**Powód:** ${reason}\n` +
-          `**Data:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
-          `Kanał zostanie usunięty za 10 sekund...`
+            `**Powód:** ${reason}\n` +
+            `**Data:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
+            `Kanał zostanie usunięty za 10 sekund...`
         )
         .setColor("#e74c3c")
         .setTimestamp();
@@ -469,34 +482,39 @@ class TicketHandler {
           console.error("Błąd podczas usuwania kanału:", error);
         }
       }, 10000);
-
     } catch (error) {
       console.error("Błąd podczas zamykania ticketu:", error);
-      await interaction.editReply("❌ Wystąpił błąd podczas zamykania ticketu.");
+      await interaction.editReply(
+        "❌ Wystąpił błąd podczas zamykania ticketu."
+      );
     }
   }
 
   static async createTranscript(ticketId) {
     try {
       const messages = await TicketMessage.getTranscript(ticketId);
-      
+
       let transcript = `=== TRANSKRYPT TICKETU ${ticketId} ===\n\n`;
-      
-      messages.forEach(msg => {
-        const timestamp = new Date(msg.timestamp).toLocaleString('pl-PL');
-        const authorPrefix = msg.isStaff ? "[PERSONEL]" : msg.isSystem ? "[SYSTEM]" : "[UŻYTKOWNIK]";
-        
+
+      messages.forEach((msg) => {
+        const timestamp = new Date(msg.timestamp).toLocaleString("pl-PL");
+        const authorPrefix = msg.isStaff
+          ? "[PERSONEL]"
+          : msg.isSystem
+          ? "[SYSTEM]"
+          : "[UŻYTKOWNIK]";
+
         transcript += `[${timestamp}] ${authorPrefix} ${msg.author}: ${msg.content}\n`;
-        
+
         if (msg.attachments && msg.attachments.length > 0) {
-          msg.attachments.forEach(att => {
+          msg.attachments.forEach((att) => {
             transcript += `  📎 Załącznik: ${att.name} (${att.url})\n`;
           });
         }
-        
+
         transcript += "\n";
       });
-      
+
       return transcript;
     } catch (error) {
       console.error("Błąd podczas tworzenia transkryptu:", error);
@@ -510,32 +528,34 @@ class TicketHandler {
       if (!channel) return;
 
       const transcriptEmbed = new EmbedBuilder()
-        .setTitle(`📋 Transkrypt Ticketu #${ticket.ticketId.split('-')[1]}`)
+        .setTitle(`📋 Transkrypt Ticketu #${ticket.ticketId.split("-")[1]}`)
         .setDescription(
           `**Użytkownik:** ${ticket.username}\n` +
-          `**Kategoria:** ${ticket.category}\n` +
-          `**Priorytet:** ${ticket.priority}\n` +
-          `**Status:** ${ticket.status}\n` +
-          `**Utworzony:** <t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>\n` +
-          `**Zamknięty:** <t:${Math.floor(ticket.closedBy.closedAt.getTime() / 1000)}:F>\n` +
-          `**Zamknięty przez:** ${ticket.closedBy.username}\n` +
-          `**Powód zamknięcia:** ${ticket.closedBy.reason}`
+            `**Kategoria:** ${ticket.category}\n` +
+            `**Priorytet:** ${ticket.priority}\n` +
+            `**Status:** ${ticket.status}\n` +
+            `**Utworzony:** <t:${Math.floor(
+              ticket.createdAt.getTime() / 1000
+            )}:F>\n` +
+            `**Zamknięty:** <t:${Math.floor(
+              ticket.closedBy.closedAt.getTime() / 1000
+            )}:F>\n` +
+            `**Zamknięty przez:** ${ticket.closedBy.username}\n` +
+            `**Powód zamknięcia:** ${ticket.closedBy.reason}`
         )
         .setColor("#34495e")
         .setTimestamp();
 
-      // Wyślij transkrypt jako plik
-      const buffer = Buffer.from(transcript, 'utf-8');
+      const buffer = Buffer.from(transcript, "utf-8");
       const attachment = {
         attachment: buffer,
-        name: `ticket-${ticket.ticketId}-transcript.txt`
+        name: `ticket-${ticket.ticketId}-transcript.txt`,
       };
 
       await channel.send({
         embeds: [transcriptEmbed],
-        files: [attachment]
+        files: [attachment],
       });
-
     } catch (error) {
       console.error("Błąd podczas wysyłania transkryptu:", error);
     }
@@ -549,8 +569,10 @@ class TicketHandler {
       const ratingEmbed = new EmbedBuilder()
         .setTitle("⭐ Oceń Obsługę Ticketu")
         .setDescription(
-          `Twój ticket **#${ticket.ticketId.split('-')[1]}** został zamknięty.\n\n` +
-          `Pomóż nam poprawić jakość obsługi - oceń swoją obsługę!`
+          `Twój ticket **#${
+            ticket.ticketId.split("-")[1]
+          }** został zamknięty.\n\n` +
+            `Pomóż nam poprawić jakość obsługi - oceń swoją obsługę!`
         )
         .setColor("#f39c12")
         .setTimestamp();
@@ -565,11 +587,13 @@ class TicketHandler {
 
       await user.send({
         embeds: [ratingEmbed],
-        components: [ratingButtons]
+        components: [ratingButtons],
       });
-
     } catch (error) {
-      console.log(`Nie udało się wysłać prośby o ocenę do użytkownika ${ticket.username}:`, error.message);
+      console.log(
+        `Nie udało się wysłać prośby o ocenę do użytkownika ${ticket.username}:`,
+        error.message
+      );
     }
   }
 
@@ -577,7 +601,7 @@ class TicketHandler {
     const allStaffRoles = [
       ...config.staffRoles.admin,
       ...config.staffRoles.moderator,
-      ...config.staffRoles.support
+      ...config.staffRoles.support,
     ];
 
     for (const roleId of allStaffRoles) {
@@ -588,19 +612,19 @@ class TicketHandler {
         for (const [userId, member] of role.members) {
           try {
             let embed;
-            
+
             switch (type) {
-              case 'new':
+              case "new":
                 embed = new EmbedBuilder()
                   .setTitle("🎫 Nowy Ticket")
                   .setDescription(
                     `Nowy ticket został utworzony na serwerze **${guild.name}**.\n\n` +
-                    `**Ticket:** #${ticket.ticketId.split('-')[1]}\n` +
-                    `**Kategoria:** ${ticket.category}\n` +
-                    `**Priorytet:** ${ticket.priority}\n` +
-                    `**Użytkownik:** ${ticket.username}\n` +
-                    `**Tytuł:** ${ticket.title}\n\n` +
-                    `[Przejdź do ticketu](https://discord.com/channels/${guild.id}/${ticket.channelId})`
+                      `**Ticket:** #${ticket.ticketId.split("-")[1]}\n` +
+                      `**Kategoria:** ${ticket.category}\n` +
+                      `**Priorytet:** ${ticket.priority}\n` +
+                      `**Użytkownik:** ${ticket.username}\n` +
+                      `**Tytuł:** ${ticket.title}\n\n` +
+                      `[Przejdź do ticketu](https://discord.com/channels/${guild.id}/${ticket.channelId})`
                   )
                   .setColor("#3498db");
                 break;
@@ -609,12 +633,13 @@ class TicketHandler {
             if (embed) {
               await member.send({ embeds: [embed] });
             }
-          } catch (error) {
-            // Ignoruj błędy DM (użytkownik może mieć wyłączone DM)
-          }
+          } catch (error) {}
         }
       } catch (error) {
-        console.error(`Błąd podczas wysyłania powiadomień dla roli ${roleId}:`, error);
+        console.error(
+          `Błąd podczas wysyłania powiadomień dla roli ${roleId}:`,
+          error
+        );
       }
     }
   }
@@ -622,9 +647,9 @@ class TicketHandler {
   static getPriorityEmoji(priority) {
     const emojis = {
       low: "🟢",
-      medium: "🟡", 
+      medium: "🟡",
       high: "🟠",
-      critical: "🔴"
+      critical: "🔴",
     };
     return emojis[priority] || "⚪";
   }

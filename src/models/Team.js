@@ -103,12 +103,10 @@ const teamSchema = new mongoose.Schema({
   },
 });
 
-// Indeksy dla lepszej wydajności
 teamSchema.index({ guildId: 1, leaderId: 1 });
 teamSchema.index({ guildId: 1, "members.userId": 1 });
 teamSchema.index({ teamId: 1 });
 
-// Metody pomocnicze
 teamSchema.methods.addMember = function (userId) {
   if (this.members.length >= this.maxMembers) {
     throw new Error("Team is full");

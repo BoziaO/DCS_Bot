@@ -25,7 +25,6 @@ async function handleTeamInteraction(interaction) {
   const guildId = interaction.guild.id;
 
   try {
-    // Team management buttons
     if (customId.startsWith("team_accept_")) {
       await handleTeamAccept(interaction, customId, userId, guildId);
     } else if (customId.startsWith("team_decline_")) {
@@ -36,17 +35,11 @@ async function handleTeamInteraction(interaction) {
       await handleTeamConfirmDisband(interaction, customId, userId, guildId);
     } else if (customId.startsWith("team_cancel_")) {
       await handleTeamCancel(interaction);
-    }
-
-    // Team hunt buttons
-    else if (customId.startsWith("team_hunt_start_")) {
+    } else if (customId.startsWith("team_hunt_start_")) {
       await handleTeamHuntStart(interaction, customId, userId, guildId);
     } else if (customId.startsWith("team_hunt_cancel_")) {
       await handleTeamHuntCancel(interaction, customId);
-    }
-
-    // Team session buttons
-    else if (customId.startsWith("team_join_")) {
+    } else if (customId.startsWith("team_join_")) {
       await handleTeamSessionJoin(interaction, customId, userId, guildId);
     } else if (customId.startsWith("team_ready_")) {
       await handleTeamSessionReady(interaction, customId, userId, guildId);
@@ -54,10 +47,7 @@ async function handleTeamInteraction(interaction) {
       await handleTeamSessionLeave(interaction, customId, userId, guildId);
     } else if (customId.startsWith("team_start_")) {
       await handleTeamSessionStart(interaction, customId, userId, guildId);
-    }
-
-    // Team investigation buttons
-    else if (customId.startsWith("team_investigate_confirm_")) {
+    } else if (customId.startsWith("team_investigate_confirm_")) {
       await handleTeamInvestigateConfirm(
         interaction,
         customId,
@@ -98,7 +88,6 @@ async function handleTeamAccept(interaction, customId, userId, guildId) {
     });
   }
 
-  // Check if user already has a team
   const existingTeam = await teamManager.getUserTeam(guildId, userId);
   if (existingTeam) {
     return interaction.reply({
@@ -276,7 +265,6 @@ async function handleTeamHuntStart(interaction, customId, userId, guildId) {
     });
   }
 
-  // Create team hunt session
   const targetGhost = require("../data/phasmophobiaData").ghosts[
     Math.floor(
       Math.random() * require("../data/phasmophobiaData").ghosts.length
@@ -292,13 +280,12 @@ async function handleTeamHuntStart(interaction, customId, userId, guildId) {
     {
       targetGhost,
       mapName: selectedMap.name,
-      difficulty: "intermediate", // Default difficulty
+      difficulty: "intermediate",
       shareRewards: team.settings.shareRewards,
       shareEvidence: team.settings.shareEvidence,
     }
   );
 
-  // Add team leader as first participant
   await teamSession.addParticipant(userId);
 
   const embed = teamManager.createSessionEmbed(teamSession, team);
@@ -465,7 +452,6 @@ async function handleTeamSessionStart(interaction, customId, userId, guildId) {
   await teamManager.startSession(sessionId);
 
   if (session.type === "hunt") {
-    // Start team hunt
     const huntState = cooperativeHunt.createCooperativeHuntState(
       session.huntData.targetGhost,
       session.huntData.mapName,
@@ -493,7 +479,6 @@ async function handleTeamSessionStart(interaction, customId, userId, guildId) {
       components: actionButtons,
     });
   } else if (session.type === "investigation") {
-    // Start team investigation
     const embed = new EmbedBuilder()
       .setTitle("🔍 Śledztwo zespołowe rozpoczęte!")
       .setDescription(
@@ -544,7 +529,6 @@ async function handleTeamInvestigateConfirm(
     });
   }
 
-  // Add user to session if not already participating
   if (!session.isParticipant(userId)) {
     await session.addParticipant(userId);
   }

@@ -10,7 +10,7 @@ const { v4: uuidv4 } = require("uuid");
 
 class TeamManager {
   constructor() {
-    this.activeSessions = new Map(); // Cache for active sessions
+    this.activeSessions = new Map();
   }
 
   /**
@@ -98,13 +98,11 @@ class TeamManager {
     }
 
     if (team.isLeader(userId)) {
-      // If leader leaves, transfer leadership or disband team
       if (team.getMemberCount() > 1) {
         const newLeader = team.members.find((m) => m.userId !== userId);
         team.leaderId = newLeader.userId;
         newLeader.role = "leader";
       } else {
-        // Disband team if leader is the only member
         await Team.deleteOne({ teamId });
         return null;
       }
@@ -265,13 +263,11 @@ class TeamManager {
 
     await session.complete(results);
 
-    // Update team stats
     const team = await this.getTeamById(session.teamId);
     if (team) {
       await team.updateStats(results);
     }
 
-    // Remove from cache
     this.activeSessions.delete(sessionId);
 
     return session;
@@ -471,7 +467,7 @@ class TeamManager {
   async cleanupInactiveSessions() {
     const expiredSessions = await TeamSession.find({
       status: { $in: ["waiting", "active"] },
-      createdAt: { $lt: new Date(Date.now() - 2 * 60 * 60 * 1000) }, // 2 hours ago
+      createdAt: { $lt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
     });
 
     for (const session of expiredSessions) {
