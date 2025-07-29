@@ -980,7 +980,6 @@ const maps = [
     baseReward: 100,
     sanityDrain: 0.8,
   },
-
   {
     name: "Grafton Farmhouse",
     size: "medium",
@@ -1079,7 +1078,6 @@ const maps = [
     baseReward: 240,
     sanityDrain: 1.3,
   },
-
   {
     name: "Brownstone High School",
     size: "large",
@@ -1189,7 +1187,6 @@ const maps = [
     baseReward: 800,
     sanityDrain: 3.0,
   },
-
   {
     name: "Point Hope",
     size: "medium",

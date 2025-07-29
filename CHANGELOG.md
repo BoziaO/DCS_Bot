@@ -7,9 +7,12 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.6] - 30.07.2025
+
 ### Dodane
 
 - 🎫 **Kompletny zaawansowany system ticketów**
+
   - Historia i logi wszystkich wiadomości w ticketach
   - Transkrypty rozmów w formatach TXT, HTML, JSON
   - Automatyczne zamykanie nieaktywnych ticketów z ostrzeżeniami
@@ -22,6 +25,7 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Automatyczne archiwizowanie zamkniętych ticketów
 
 - 📊 **Nowe modele danych dla systemu ticketów**
+
   - `TicketMessage` - przechowywanie wszystkich wiadomości
   - `TicketAssignment` - historia przypisań personelu
   - `TicketRating` - system ocen z kategoriami szczegółowymi
@@ -29,6 +33,7 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `TicketConfig` - zaawansowana konfiguracja systemu
 
 - 🎯 **Nowe komendy systemu ticketów**
+
   - `/setup-tickets` - pierwsza konfiguracja systemu
   - `/ticket-config` - zarządzanie konfiguracją (auto-close, powiadomienia, limity, role)
   - `/assign-ticket` - przypisywanie ticketów do personelu
@@ -42,6 +47,7 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `/generate-report` - generowanie szczegółowych raportów
 
 - 🤖 **Automatyczne funkcje systemu ticketów**
+
   - System auto-close sprawdzający nieaktywność co 30 minut
   - Automatyczne logowanie wszystkich wiadomości w ticketach
   - Powiadomienia DM o krytycznych priorytetach dla administratorów
@@ -51,6 +57,42 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Przycisk powrotu w embedzie zebranych dowodów w komendzie hunt
 - Ulepszona dokumentacja README.md z szczegółową strukturą projektu
 - Dodano CHANGELOG.md do śledzenia zmian
+
+- 🔄 **Rozszerzony system codziennych wyzwań Phasmophobia**
+
+  - Automatyczne odnowienie wyzwań z konfigurowalnymi częstotliwościami
+  - Obsługa 5 różnych interwałów: co godzinę, co 3h, co 6h, co 12h, codziennie
+  - Inteligentny system unikania powtórzeń wyzwań
+  - 33% szansy na bonus z losowym duchem (+50% XP)
+  - Automatyczne czyszczenie historii wyzwań
+  - Zaawansowane embedy z informacjami o następnym odnowieniu
+  - Konfigurowalny czas dla codziennych wyzwań (0-23h)
+
+- 🎯 **Nowe komendy systemu codziennych wyzwań**
+
+  - `/setup-dailychallenge` - konfiguracja z opcjami częstotliwości i godziny
+  - `/renew-dailychallenge` - ręczne odnowienie wyzwania
+  - `/dailychallenge-status` - szczegółowy status systemu i diagnostyka
+  - `/remove-dailychallenge` - wyłączanie lub usuwanie konfiguracji
+
+- 📊 **Rozszerzone modele danych**
+
+  - `DailyChallengeConfig` - dodano pola: `renewalFrequency`, `customHour`, `enabled`, `lastChallengeId`, `lastRenewal`
+  - Pełna kompatybilność wsteczna z istniejącymi konfiguracjami
+
+- 🤖 **Zaawansowany scheduler wyzwań**
+
+  - `DailyChallengeScheduler` - nowa klasa zarządzająca wieloma harmonogramami
+  - Równoległe zadania cron dla każdej częstotliwości
+  - Monitoring zdrowia schedulera i raportowanie błędów
+  - Automatyczne czyszczenie nieaktywnych serwerów po 7 dniach
+
+- 🗺️ **Zaktualizowane mapy Phasmophobia**
+  - Kompletna lista 16 oficjalnych map z gry
+  - Dodano nowe mapy: Point Hope, 42 Edgefield Road, 6 Tanglewood Drive, 13 Willow Street
+  - Zaktualizowane opisy, pokoje i specjalne cechy wszystkich map
+  - Zbalansowane nagrody i poziomy trudności dla każdej mapy
+  - Szczegółowe wskazówki i strategie dla każdej lokacji
 
 ### Naprawione
 
@@ -71,6 +113,13 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Zaktualizowano strukturę projektu w dokumentacji
 - Poprawiono spójność obsługi inventory w całym projekcie
 
+- **Przepisano system codziennych wyzwań Phasmophobia**
+  - Zastąpiono pojedynczy cron job wieloma schedulerami
+  - Zaktualizowano `ready.js` o inicjalizację nowego `DailyChallengeScheduler`
+  - Usunięto stary kod `scheduleDailyChallenge` i `getDailyChallenge`
+  - Rozszerzono komendy `/setup-dailychallenge` i `/remove-dailychallenge`
+  - Dodano walidację kanałów i uprawnień przed wysyłaniem wyzwań
+
 ### Techniczne
 
 - **Nowa struktura plików systemu ticketów**:
@@ -81,6 +130,22 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Integracja z istniejącym systemem** - zachowano kompatybilność ze starym systemem ticketów
 - **Optymalizacja wydajności** - efektywne zapytania do bazy danych
 - **Skalowalna architektura** - łatwe dodawanie nowych funkcji
+
+- **Nowa architektura systemu codziennych wyzwań**:
+  - `src/utils/challenges/dailyChallengeScheduler.js` - główny scheduler z klasą `DailyChallengeScheduler`
+  - `src/commands/utility/renew-dailychallenge.js` - komenda ręcznego odnowienia
+  - `src/commands/utility/dailychallenge-status.js` - komenda statusu i diagnostyki
+  - Rozszerzono `src/models/DailyChallengeConfig.js` o nowe pola konfiguracyjne
+- **Zaawansowane zarządzanie harmonogramami**:
+  - 5 równoległych zadań cron dla różnych częstotliwości
+  - Inteligentne sprawdzanie warunków odnowienia
+  - System śledzenia historii wyzwań per serwer (Map-based storage)
+  - Automatyczne czyszczenie pamięci co 24h
+- **Ulepszona obsługa błędów**:
+  - Walidacja istnienia kanałów przed wysyłaniem
+  - Graceful handling błędów bazy danych
+  - Szczegółowe logowanie z kolorami w konsoli
+  - Izolacja błędów między różnymi serwerami
 
 ## [1.1.535] - 28.07.2025
 

@@ -20,10 +20,10 @@ Ten dokument przedstawia planowany rozwój bota w kolejnych wersjach.
 
 ### 🎮 Ulepszenia Phasmophobia
 
-- [ ] **Tryb Kooperacyjny** - Polowania zespołowe
+- [x] **Tryb Kooperacyjny** - Polowania zespołowe
 - [ ] **Sezonowe Eventy** - Specjalne polowania w święta
-- [ ] **Update Map** - Dodatkowe mapy do polowań
-- [ ] **Daily challenges** - odnowienie codziennych wyzwań
+- [x] **Update Map** - Dodatkowe mapy do polowań
+- [x] **Daily challenges** - odnowienie codziennych wyzwań
 
 ### 💰 Ekonomia 2.0
 
@@ -32,7 +32,7 @@ Ten dokument przedstawia planowany rozwój bota w kolejnych wersjach.
 
 ### 🛜 System reorganizacja
 
-- [ ] **Ticket** - odnowienie systemu ticketów
+- [x] **Ticket** - odnowienie systemu ticketów
 - [x] **Welcome** - Odnowienie systemu powitań
 - [ ] **Help** - odnowienie komendy help
 ---

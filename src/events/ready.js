@@ -6,6 +6,7 @@ const { ghosts, challenges } = require("../data/phasmophobiaData");
 const { performanceMonitor } = require("../utils/performance");
 const { cache } = require("../utils/cache");
 const challengeScheduler = require("../utils/leveling/challengeScheduler");
+const dailyChallengeScheduler = require("../utils/challenges/dailyChallengeScheduler");
 const levelingCache = require("../utils/leveling/levelingCache");
 const welcomeCache = require("../utils/welcome/welcomeCache");
 
@@ -81,69 +82,6 @@ const sanityRegeneration = async () => {
   }
 };
 
-const getDailyChallenge = () => {
-  const challengeKeys = Object.keys(challenges);
-  const randomCategoryKey =
-    challengeKeys[Math.floor(Math.random() * challengeKeys.length)];
-  const category = challenges[randomCategoryKey];
-  const baseChallenge =
-    category.tasks[Math.floor(Math.random() * category.tasks.length)];
-
-  if (Math.random() < 0.33 && ghosts && ghosts.length > 0) {
-    const randomGhost = ghosts[Math.floor(Math.random() * ghosts.length)];
-    return {
-      challenge: `${baseChallenge}\n**Bonus:** Znajdź ducha typu *${randomGhost.name}* 👻`,
-      category,
-    };
-  }
-  return { challenge: baseChallenge, category };
-};
-
-const scheduleDailyChallenge = (client) => {
-  cron.schedule(
-    "0 8 * * *",
-    async () => {
-      console.log(
-        `${colors.yellow}[CRON] Running daily challenge job...${colors.reset}`
-      );
-      try {
-        const configs = await DailyChallengeConfig.find();
-        if (configs.length === 0) return;
-
-        const { challenge, category } = getDailyChallenge();
-        const challengeEmbed = new EmbedBuilder()
-          .setTitle("📅 Codzienne Wyzwanie Phasmophobia!")
-          .setDescription(
-            `**Kategoria:** ${category.emoji} ${category.name}\n\n**Wyzwanie:**\n> ${challenge}`
-          )
-          .setColor("#ff6b35")
-          .setTimestamp()
-          .setFooter({ text: "Powodzenia, łowcy duchów! 🎯" });
-
-        for (const config of configs) {
-          try {
-            const channel = await client.channels.fetch(config.channelId);
-            if (channel && channel.isTextBased()) {
-              await channel.send({ embeds: [challengeEmbed] });
-            }
-          } catch (error) {
-            console.error(
-              `${colors.red}[ERROR] Failed to send challenge to ${config.channelId}:${colors.reset}`,
-              error.message
-            );
-          }
-        }
-      } catch (error) {
-        console.error(
-          `${colors.red}[ERROR] Daily challenge job failed:${colors.reset}`,
-          error
-        );
-      }
-    },
-    { timezone: "Europe/Warsaw" }
-  );
-};
-
 module.exports = {
   name: Events.ClientReady,
   once: true,
@@ -159,7 +97,19 @@ module.exports = {
     setInterval(() => rotateStatus(client), 30000);
 
     setInterval(sanityRegeneration, 3600 * 1000);
-    scheduleDailyChallenge(client);
+
+    try {
+      dailyChallengeScheduler.initialize(client);
+      dailyChallengeScheduler.start();
+      console.log(
+        `${colors.green}[✓] Daily Challenge Scheduler initialized successfully${colors.reset}`
+      );
+    } catch (error) {
+      console.error(
+        `${colors.red}[ERROR] Failed to initialize Daily Challenge Scheduler:${colors.reset}`,
+        error
+      );
+    }
 
     try {
       challengeScheduler.start();
