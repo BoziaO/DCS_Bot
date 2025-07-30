@@ -61,10 +61,8 @@ class CacheManager {
     const ttl = this.ttlCache.get(key);
     if (!ttl || Date.now() > ttl) {
       this.delete(key);
-      this.missCount++;
       return false;
     }
-    this.hitCount++;
     return this.cache.has(key);
   }
 

@@ -7,6 +7,29 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Poprawione
+
+- 🧹 **Konsolidacja systemu polowań**
+  - Przeniesiono funkcje `createEvidenceEmbed` i `createEvidenceReturnButton` z `src/utils/hunt/embedCreators.js` do `src/utils/hunt/interactiveHunt.js`
+  - Usunięto nieużywane funkcje: `createEmptyHuntEmbed`, `createHuntInProgressEmbed`, `createHuntResultEmbed`, `createTimeoutEmbed`, `createErrorEmbed`
+  - Zaktualizowano importy w `src/commands/economy/hunt.js` - wszystkie funkcje UI teraz importowane z jednego pliku
+  - Usunięto plik `src/utils/hunt/embedCreators.js` zawierający martwy kod (~150 linii)
+  - Uproszczono architekturę - cała logika tworzenia UI dla polowań w jednym miejscu
+
+- 📊 **Poprawka logiki statystyk cache**
+  - Usunięto niepoprawną inkrementację liczników `hitCount` i `missCount` z metody `has()` w `src/utils/cache.js`
+  - Metoda `has()` służy teraz tylko do sprawdzania istnienia klucza bez wpływu na statystyki wydajności
+  - Statystyki `hitRate` odzwierciedlają teraz rzeczywistą skuteczność pobierania danych przez metodę `get()`
+  - Poprawiono semantykę metod cache - tylko operacje pobierania danych wpływają na metryki wydajności
+
+### Zweryfikowane
+
+- ✅ **Potwierdzono aktywność systemu investigate**
+  - System `src/utils/investigate/` jest w pełni funkcjonalny i używany przez komendę `/investigate`
+  - `equipmentManager.js` aktywnie wykorzystywany przez `investigateCore.js` i `cooperativeInvestigation.js`
+  - System zintegrowany z challengami dziennymi, osiągnięciami i cooldownami
+  - Oferuje alternatywną rozgrywkę do systemu `/hunt` - eksploracja lokacji vs polowanie na duchy
+
 ## [1.1.6] - 30.07.2025
 
 ### Dodane
