@@ -5,7 +5,30 @@ Wszystkie istotne zmiany w tym projekcie będą dokumentowane w tym pliku.
 Format oparty na [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased version v1.1]
+## [Unreleased version v1.1.6]
+
+## [1.1.6] - 01.08.2025
+
+### Zmienione
+
+⛑️ **Przebudowa Komendy /help**
+- 🎨 Zaawansowany Interfejs
+  - **Interaktywne menu główne** z personalizowanymi sugestiami
+  - **Kolorowe kategorie** - każda kategoria ma unikalny kolor i ikonę
+  - **Przyciski nawigacyjne** dla łatwiejszego poruszania się
+  - **Responsywne komponenty** dostosowane do uprawnień użytkownika
+  
+- 🔍 Inteligentne Wyszukiwanie
+  - **Algorytm punktacji** dla najlepszych wyników wyszukiwania
+  - **Wyszukiwanie wielokryterialne** (nazwa, opis, tagi)
+  - **Sugestie podobnych komend** przy braku wyników
+  - **Wskaźniki trafności** wizualnie oznaczające jakość dopasowania
+
+- 📊 Rozszerzone Informacje o Komendach
+  - **Automatyczne generowanie składni** na podstawie parametrów
+  - **Szczegółowe informacje o parametrach** z typami danych
+  - **Status dostępności** komend w czasie rzeczywistym
+  - **Wymagane uprawnienia** z wizualnym oznaczeniem dostępu
 
 ## [1.1.6] - 31.07.2025
 

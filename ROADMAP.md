@@ -30,13 +30,13 @@ Ta wersja skupia się na wzbogaceniu istniejących systemów, dodaniu funkcji sp
 ### 💰 Ekonomia i Progresja 
 
 - [ ] **Inwestycje** - Długoterminowe lokaty, akcje i dynamiczny rynek.
-- [ ] **Sklep Sezonowy** - Ograniczone czasowo przedmioty kosmetyczne i użytkowe.
+- [x] **Sklep Sezonowy** - Ograniczone czasowo przedmioty kosmetyczne i użytkowe.
 
 ### 🔧 Narzędzia i System
 
 - [x] **Reorganizacja Systemu Ticketów** - Nowy, bardziej intuicyjny system wsparcia.
 - [x] **Odnowienie Systemu Powitań** - Bardziej interaktywne i konfigurowalne powitania.
-- [ ] **Przebudowa Komendy /help** - Interaktywny i kontekstowy system pomocy.
+- [x] **Przebudowa Komendy /help** - Interaktywny i kontekstowy system pomocy.
 - [ ] **Zaawansowane Logi** - Szczegółowe logowanie zdarzeń dla administracji.
 ---
 
