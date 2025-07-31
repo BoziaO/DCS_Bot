@@ -16,77 +16,84 @@ Ten dokument przedstawia planowany rozwój bota w kolejnych wersjach.
 
 ---
 
-## 🚀 Wersja v1.1.6 - "Quality of Life"
+## 🚀 Wersja v1.1 - "Quality of Life"
 
-### 🎮 Ulepszenia Phasmophobia
+Ta wersja skupia się na wzbogaceniu istniejących systemów, dodaniu funkcji społecznościowych i poprawie jakości ekonomii graczy.
+
+### 🎮 Ulepszenia Głównej Rozgrywki ✅
 
 - [x] **Tryb Kooperacyjny** - Polowania zespołowe
-- [ ] **Sezonowe Eventy** - Specjalne polowania w święta
-- [x] **Update Map** - Dodatkowe mapy do polowań
-- [x] **Daily challenges** - odnowienie codziennych wyzwań
+- [x] **Sezonowe Eventy** - Specjalne polowania i wyzwania w święta.
+- [x] **Update Map** - Dodatkowe mapy do polowań prosto z Phasmophoii
+- [x] **Daily challenges** - Odnowiony i bardziej angażujący system codziennych zadań.
 
-### 💰 Ekonomia 2.0
+### 💰 Ekonomia i Progresja 
 
-- [ ] **Inwestycje** - Długoterminowe lokaty pieniędzy
-- [ ] **Sklep Sezonowy** - Ograniczone czasowo przedmioty
+- [ ] **Inwestycje** - Długoterminowe lokaty, akcje i dynamiczny rynek.
+- [ ] **Sklep Sezonowy** - Ograniczone czasowo przedmioty kosmetyczne i użytkowe.
 
-### 🛜 System reorganizacja
+### 🔧 Narzędzia i System
 
-- [x] **Ticket** - odnowienie systemu ticketów
-- [x] **Welcome** - Odnowienie systemu powitań
-- [ ] **Help** - odnowienie komendy help
+- [x] **Reorganizacja Systemu Ticketów** - Nowy, bardziej intuicyjny system wsparcia.
+- [x] **Odnowienie Systemu Powitań** - Bardziej interaktywne i konfigurowalne powitania.
+- [ ] **Przebudowa Komendy /help** - Interaktywny i kontekstowy system pomocy.
+- [ ] **Zaawansowane Logi** - Szczegółowe logowanie zdarzeń dla administracji.
 ---
 
-## 🌟 Wersja v1.2.7 - "Social Features"
+## 🌟 Wersja v1.2 - "Social Features"
 
-### 👥 Funkcje Społecznościowe
+### 👥 Funkcje Społecznościowe i Personalizacja
 
-- [ ] **Profile Rozszerzone** - Personalizacja profili
-- [ ] **Grupy Zainteresowań** - Automatyczne role na podstawie aktywności
-
-### 🎨 Personalizacja
-
-- [ ] **Motywy Kolorystyczne** - Wybór kolorów embedów
-- [ ] **Niestandardowe Embedy** - Personalizacja wyglądu
-
-### 🔧 Narzędzia Administracyjne
-
-- [ ] **Zaawansowane Logi** - Szczegółowe logowanie zdarzeń
-- [ ] **Backup Automatyczny** - Automatyczne kopie zapasowe
-
+- [ ] **Rozszerzone Profile Użytkowników** - Możliwość ustawienia tła, ulubionych przedmiotów i osiągnięć.
+- [ ] **Grupy Zainteresowań** - Automatyczne role na podstawie aktywności i preferencji w grach.
+- [ ] **Motywy Kolorystyczne** - Możliwość wyboru przez użytkownika kolorów embedów bota.
+- [ ] **Niestandardowe Embedy** - Personalizacja wyglądu powiadomień i wiadomości.
 ---
 
-## 🚀 Wersja v1.3.0 - "Advanced Gaming"
+## 🚀 Wersja v1.3 - "Advanced Gaming"
+
+Wprowadzenie zupełnie nowych trybów rozgrywki i rozbudowa istniejących gier do pełnoprawnego doświadczenia RPG.
 
 ### 🎮 Nowe Systemy Gier
 
-- [ ] **Mini-Gry** - Proste gry tekstowe
-- [ ] **Turnieje** - Organizowane wydarzenia
-- [ ] **Phasmophobia RPG** - RPG w Phasmophobii
+- [ ] **Mini-Gry** - Szybkie gry tekstowe i zręcznościowe do rywalizacji w czasie rzeczywistym.
+- [ ] **Turnieje** -  Zautomatyzowane turnieje z rankingami i nagrodami.
 
+### 👻 Phasmophobia: The RPG
+
+- [ ] **Klasy RPG** - Wybór specjalizacji (np. Technik, Medium, Badacz) z unikalnymi zdolnościami.
+- [ ] **Drzewka Umiejętności** - Rozwój postaci i odblokowywanie nowych pasywnych i aktywnych umiejętności.
+- [ ] **System Łupów i Ekwipunku** -  Zdobywanie rzadkiego sprzętu z bonusami do statystyk.
+- [ ] **Walki z Bossami** - Specjalne, trudne polowania na unikalne, potężne duchy.
+- [ ] **System Wyzwań** - Codzienne wyzwania, które mogą prowadzić do nagród lub bonusów.
 ---
 
-## 🔮 Wersja v2.0.0 - "Next Generation"
+## 🔮 Wersja v2.0 - "Next Generation"
 
 ### 🏗️ Przepisanie Architektury
 
-- [ ] **Mikrousługi** - Podział na mniejsze serwisy
-- [ ] **GraphQL API** - Nowoczesne API
-- [ ] **Redis Cache** - Zaawansowany system cache
-- [ ] **Docker Support** - Konteneryzacja aplikacji
+- [ ] **Mikrousługi** - Podział na mniejsze, niezależne serwisy (np. ekonomia, gry, moderacja).
+- [ ] **Redis Cache** - Zaawansowany, zewnętrzny system cache dla jeszcze większej wydajności
+- [ ] **Docker Support** - Pełna konteneryzacja aplikacji dla spójnego środowiska i łatwego wdrażania
+- [ ] **Message Queues** - Wprowadzenie systemu (np. RabbitMQ) do obsługi asynchronicznych zadań (logowanie, przyznawanie nagród), co zwiększy odporność na błędy i skalowalność.
 
 ### 🌍 Skalowanie
 
-- [ ] **Multi-Server Support** - Obsługa wielu serwerów
-- [ ] **Load Balancing** - Równoważenie obciążenia
-- [ ] **CDN Integration** - Szybsze ładowanie zasobów
-- [ ] **Global Database** - Rozproszona baza danych
+- [ ] **Sharding** - Natywne wsparcie dla działania bota na tysiącach serwerów.
+- [ ] **Load Balancing** - Równoważenie obciążenia między instancjami bota.
+- [ ] **CDN Integration** - Szybsze ładowanie zasobów statycznych (np. obrazków w embedach).
+- [ ] **Global Database** - Architektura bazy danych gotowa na rozproszenie geograficzne.
 
 ### 🔒 Bezpieczeństwo
 
-- [ ] **Advanced Permissions** - Szczegółowe uprawnienia
-- [ ] **Audit Logs** - Szczegółowe logi bezpieczeństwa
+- [ ] **Advanced Permissions** - Szczegółowe zarządzanie uprawnieniami do komend i funkcji.
+- [ ] **Audit Logs** - Szczegółowe logi bezpieczeństwa i akcji administracyjnych.
 
+### ⚙️ Developer Experience i Utrzymanie Kodu
+
+- [x] **Documentation** - Utrzymywanie w porządku i ładzie dokumentacji
+- [ ] **CI/CD Pipeline** - Pełna automatyzacja testowania, budowania i wdrażania kontenerów Docker.
+- [ ] **Advanced Testing** - Wprowadzenie testów integracyjnych i end-to-end (E2E) dla zapewnienia stabilności mikrousług.
 ---
 
 ## 🎯 Długoterminowe Cele

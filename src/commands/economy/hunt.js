@@ -43,6 +43,8 @@ const {
     calculateFinalRewards,
 } = require("../../utils/hunt/huntLogic");
 
+const seasonalEventManager = require("../../utils/events/seasonalEventManager");
+
 const activeHunts = new Map();
 const teamManager = new TeamManager();
 const cooperativeHunt = new CooperativeHunt();
@@ -95,8 +97,25 @@ const checkSanityRequirement = (userProfile, difficulty) => {
     return {canHunt: true};
 };
 
-const createHuntEndEmbed = (user, huntState, isSuccess, chosenGhost = null) => {
-    const totalRewards = calculateFinalRewards(huntState);
+const createHuntEndEmbed = async (user, huntState, isSuccess, chosenGhost = null, guildId = null) => {
+    let totalRewards = calculateFinalRewards(huntState);
+    let eventInfo = null;
+    let eventMultipliers = null;
+
+    if (guildId) {
+        const eventResult = await seasonalEventManager.applyEventBoosters(
+            guildId,
+            user.id,
+            0,
+            totalRewards
+        );
+
+        if (eventResult.multipliers) {
+            totalRewards = eventResult.money;
+            eventInfo = eventResult.eventInfo;
+            eventMultipliers = eventResult.multipliers;
+        }
+    }
 
     const embed = new EmbedBuilder()
         .setTitle(`${huntState.mapData.emoji} **POLOWANIE ZAKOŃCZONE!**`)
@@ -108,6 +127,12 @@ const createHuntEndEmbed = (user, huntState, isSuccess, chosenGhost = null) => {
             huntState.selectedItems && huntState.selectedItems.length > 0
                 ? `**Użyte itemy:** ${huntState.selectedItems.join(", ")}\n\n`
                 : "";
+
+        let rewardsText = `💰 **Zarobione:** $${totalRewards.toLocaleString()}`;
+
+        if (eventInfo && eventMultipliers) {
+            rewardsText += `\n${eventInfo.emoji} **Event ${eventInfo.name}:** x${eventMultipliers.money} boost!`;
+        }
 
         embed
             .setColor(isCorrect ? "#00FF00" : "#FF6B6B")
@@ -122,7 +147,7 @@ const createHuntEndEmbed = (user, huntState, isSuccess, chosenGhost = null) => {
                         : "*Brak dowodów*"
                 }\n\n` +
                 `**Nagrody:**\n` +
-                `💰 **Zarobione:** $${totalRewards.toLocaleString()}\n` +
+                rewardsText + `\n` +
                 `💚 **Pozostała poczytalność:** ${huntState.currentSanity}%\n` +
                 `⏱️ **Czas polowania:** ${Math.floor(
                     (Date.now() - huntState.startTime) / 1000
@@ -133,6 +158,12 @@ const createHuntEndEmbed = (user, huntState, isSuccess, chosenGhost = null) => {
             huntState.selectedItems && huntState.selectedItems.length > 0
                 ? `**Użyte itemy:** ${huntState.selectedItems.join(", ")}\n\n`
                 : "";
+
+        let rewardsText = `💰 **Zarobione:** $${totalRewards.toLocaleString()}`;
+
+        if (eventInfo && eventMultipliers) {
+            rewardsText += `\n${eventInfo.emoji} **Event ${eventInfo.name}:** x${eventMultipliers.money} boost!`;
+        }
 
         embed
             .setColor("#FF6B6B")
@@ -152,7 +183,7 @@ const createHuntEndEmbed = (user, huntState, isSuccess, chosenGhost = null) => {
                         : "*Brak dowodów*"
                 }\n\n` +
                 `**Nagrody:**\n` +
-                `💰 **Zarobione:** $${totalRewards.toLocaleString()}\n` +
+                rewardsText + `\n` +
                 `💚 **Pozostała poczytalność:** ${huntState.currentSanity}%`
             );
     }

@@ -5,7 +5,28 @@ Wszystkie istotne zmiany w tym projekcie będą dokumentowane w tym pliku.
 Format oparty na [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased version v1.1]
+
+## [1.1.6] - 31.07.2025
+
+### Dodane
+
+- 🎊 **System sezonowych wydarzeń**
+  - Dodano nową kategorię w sklepie dla przedmiotów sezonowych
+  - Dynamiczne wyświetlanie specjalnych kategorii w zależności od aktualnego wydarzenia
+  - Inteligentny system wykrywania aktywnych wydarzeń sezonowych
+  - Automatyczna aktualizacja menu sklepu o sezonowe przedmioty
+  - Nowy manager wydarzeń sezonowych (`seasonalEventManager.js`)
+
+### Zmienione
+
+- 🏪 **Ulepszenia w systemie sklepu**
+  - Zaktualizowano logikę filtrowania przedmiotów o wsparcie dla elementów sezonowych
+  - Rozszerzono menu kategorii o dynamiczną sekcję wydarzeń specjalnych
+  - Dodano wsparcie dla emoji i nazw wydarzeń sezonowych w interfejsie sklepu
+
+
+## [1.1.6] - 30.07.2025
 
 ### Poprawione
 
