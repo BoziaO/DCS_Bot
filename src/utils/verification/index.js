@@ -4,8 +4,8 @@ const VerificationRewards = require("./rewards");
 const VerificationStats = require("./stats");
 
 module.exports = {
-  VerificationThemes,
-  VerificationChallenges,
-  VerificationRewards,
-  VerificationStats,
+    VerificationThemes,
+    VerificationChallenges,
+    VerificationRewards,
+    VerificationStats,
 };

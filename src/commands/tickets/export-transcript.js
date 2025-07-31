@@ -1,193 +1,189 @@
 const {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  EmbedBuilder,
-  AttachmentBuilder,
+    SlashCommandBuilder,
+    PermissionFlagsBits,
+    EmbedBuilder,
+    AttachmentBuilder,
 } = require("discord.js");
 const TicketConfig = require("../../models/tickets/TicketConfig");
 const Ticket = require("../../models/tickets/Ticket");
 const TicketMessage = require("../../models/tickets/TicketMessage");
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("export-transcript")
-    .setDescription("Eksportuje transkrypt ticketu.")
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
-    .addStringOption((option) =>
-      option
-        .setName("ticket-id")
-        .setDescription("ID ticketu (opcjonalnie, domyślnie aktualny kanał).")
-        .setRequired(false)
-    )
-    .addStringOption((option) =>
-      option
-        .setName("format")
-        .setDescription("Format eksportu.")
-        .setRequired(false)
-        .addChoices(
-          { name: "Tekst (.txt)", value: "txt" },
-          { name: "HTML (.html)", value: "html" },
-          { name: "JSON (.json)", value: "json" }
+    data: new SlashCommandBuilder()
+        .setName("export-transcript")
+        .setDescription("Eksportuje transkrypt ticketu.")
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels)
+        .addStringOption((option) =>
+            option
+                .setName("ticket-id")
+                .setDescription("ID ticketu (opcjonalnie, domyślnie aktualny kanał).")
+                .setRequired(false)
         )
-    ),
+        .addStringOption((option) =>
+            option
+                .setName("format")
+                .setDescription("Format eksportu.")
+                .setRequired(false)
+                .addChoices(
+                    {name: "Tekst (.txt)", value: "txt"},
+                    {name: "HTML (.html)", value: "html"},
+                    {name: "JSON (.json)", value: "json"}
+                )
+        ),
 
-  async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    async execute(interaction) {
+        await interaction.deferReply({ephemeral: true});
 
-    const ticketIdInput = interaction.options.getString("ticket-id");
-    const format = interaction.options.getString("format") || "txt";
+        const ticketIdInput = interaction.options.getString("ticket-id");
+        const format = interaction.options.getString("format") || "txt";
 
-    try {
-      const config = await TicketConfig.findOne({ guildId: interaction.guildId });
-      if (!config) {
-        return interaction.editReply("❌ System ticketów nie jest skonfigurowany na tym serwerze.");
-      }
+        try {
+            const config = await TicketConfig.findOne({guildId: interaction.guildId});
+            if (!config) {
+                return interaction.editReply("❌ System ticketów nie jest skonfigurowany na tym serwerze.");
+            }
 
-      let ticket;
+            let ticket;
 
-      if (ticketIdInput) {
-        ticket = await Ticket.findOne({ 
-          guildId: interaction.guildId, 
-          ticketId: ticketIdInput 
-        });
-        
-        if (!ticket) {
-          const fullTicketId = `${interaction.guildId}-${ticketIdInput.padStart(4, "0")}`;
-          ticket = await Ticket.findOne({ 
-            guildId: interaction.guildId, 
-            ticketId: fullTicketId 
-          });
+            if (ticketIdInput) {
+                ticket = await Ticket.findOne({
+                    guildId: interaction.guildId,
+                    ticketId: ticketIdInput
+                });
+
+                if (!ticket) {
+                    const fullTicketId = `${interaction.guildId}-${ticketIdInput.padStart(4, "0")}`;
+                    ticket = await Ticket.findOne({
+                        guildId: interaction.guildId,
+                        ticketId: fullTicketId
+                    });
+                }
+            } else {
+                ticket = await Ticket.findOne({
+                    guildId: interaction.guildId,
+                    channelId: interaction.channelId
+                });
+            }
+
+            if (!ticket) {
+                return interaction.editReply("❌ Nie znaleziono ticketu. Sprawdź ID lub użyj komendy w kanale ticketu.");
+            }
+
+            const memberRoles = interaction.member.roles.cache.map(role => role.id);
+            const isOwner = ticket.userId === interaction.user.id;
+            const canExport = config.isStaff(interaction.user.id, memberRoles) || isOwner;
+
+            if (!canExport) {
+                return interaction.editReply("❌ Nie masz uprawnień do eksportu transkryptu tego ticketu.");
+            }
+
+            const messages = await TicketMessage.find({ticketId: ticket.ticketId})
+                .sort({createdAt: 1});
+
+            if (messages.length === 0) {
+                return interaction.editReply("❌ Nie znaleziono wiadomości dla tego ticketu.");
+            }
+
+            let transcriptContent;
+            let fileName;
+            let contentType;
+
+            switch (format) {
+                case "html":
+                    transcriptContent = await this.generateHTMLTranscript(ticket, messages, interaction.guild);
+                    fileName = `ticket-${ticket.ticketId}-transcript.html`;
+                    contentType = "text/html";
+                    break;
+
+                case "json":
+                    transcriptContent = await this.generateJSONTranscript(ticket, messages);
+                    fileName = `ticket-${ticket.ticketId}-transcript.json`;
+                    contentType = "application/json";
+                    break;
+
+                default:
+                    transcriptContent = await this.generateTextTranscript(ticket, messages);
+                    fileName = `ticket-${ticket.ticketId}-transcript.txt`;
+                    contentType = "text/plain";
+                    break;
+            }
+
+            const buffer = Buffer.from(transcriptContent, 'utf-8');
+            const attachment = new AttachmentBuilder(buffer, {
+                name: fileName,
+                description: `Transkrypt ticketu #${ticket.ticketId.split('-')[1]}`
+            });
+
+            const exportEmbed = new EmbedBuilder()
+                .setTitle("📋 Transkrypt Wyeksportowany")
+                .setDescription(
+                    `**Ticket:** #${ticket.ticketId.split('-')[1]}\n` +
+                    `**Użytkownik:** ${ticket.username}\n` +
+                    `**Kategoria:** ${ticket.category}\n` +
+                    `**Status:** ${ticket.status}\n` +
+                    `**Liczba wiadomości:** ${messages.length}\n` +
+                    `**Format:** ${format.toUpperCase()}\n` +
+                    `**Wyeksportowany przez:** ${interaction.user}`
+                )
+                .setColor("#3498db")
+                .setTimestamp()
+                .setFooter({text: `Ticket ID: ${ticket.ticketId}`});
+
+            await interaction.editReply({
+                embeds: [exportEmbed],
+                files: [attachment]
+            });
+
+        } catch (error) {
+            console.error("Błąd podczas eksportu transkryptu:", error);
+            await interaction.editReply("❌ Wystąpił błąd podczas eksportu transkryptu.");
         }
-      } else {
-        ticket = await Ticket.findOne({ 
-          guildId: interaction.guildId, 
-          channelId: interaction.channelId 
+    },
+
+    async generateTextTranscript(ticket, messages) {
+        let transcript = `=== TRANSKRYPT TICKETU ${ticket.ticketId} ===\n\n`;
+        transcript += `Ticket #${ticket.ticketId.split('-')[1]}\n`;
+        transcript += `Użytkownik: ${ticket.username}\n`;
+        transcript += `Kategoria: ${ticket.category}\n`;
+        transcript += `Priorytet: ${ticket.priority}\n`;
+        transcript += `Status: ${ticket.status}\n`;
+        transcript += `Utworzony: ${ticket.createdAt.toLocaleString('pl-PL')}\n`;
+
+        if (ticket.assignedTo) {
+            transcript += `Przypisany do: ${ticket.assignedTo.username}\n`;
+        }
+
+        if (ticket.closedBy) {
+            transcript += `Zamknięty przez: ${ticket.closedBy.username}\n`;
+            transcript += `Data zamknięcia: ${ticket.closedBy.closedAt.toLocaleString('pl-PL')}\n`;
+            transcript += `Powód zamknięcia: ${ticket.closedBy.reason}\n`;
+        }
+
+        transcript += `\n${"=".repeat(60)}\n\n`;
+
+        messages.forEach(msg => {
+            const timestamp = new Date(msg.createdAt).toLocaleString('pl-PL');
+            const authorPrefix = msg.isStaff ? "[PERSONEL]" : msg.isSystem ? "[SYSTEM]" : "[UŻYTKOWNIK]";
+
+            transcript += `[${timestamp}] ${authorPrefix} ${msg.username}: ${msg.content}\n`;
+
+            if (msg.attachments && msg.attachments.length > 0) {
+                msg.attachments.forEach(att => {
+                    transcript += `  📎 Załącznik: ${att.name} (${att.url})\n`;
+                });
+            }
+
+            transcript += "\n";
         });
-      }
 
-      if (!ticket) {
-        return interaction.editReply("❌ Nie znaleziono ticketu. Sprawdź ID lub użyj komendy w kanale ticketu.");
-      }
+        return transcript;
+    },
 
-      // Sprawdź uprawnienia
-      const memberRoles = interaction.member.roles.cache.map(role => role.id);
-      const isOwner = ticket.userId === interaction.user.id;
-      const canExport = config.isStaff(interaction.user.id, memberRoles) || isOwner;
+    async generateHTMLTranscript(ticket, messages, guild) {
+        const guildIcon = guild.iconURL() || "";
+        const ticketNumber = ticket.ticketId.split('-')[1];
 
-      if (!canExport) {
-        return interaction.editReply("❌ Nie masz uprawnień do eksportu transkryptu tego ticketu.");
-      }
-
-      // Pobierz wiadomości
-      const messages = await TicketMessage.find({ ticketId: ticket.ticketId })
-        .sort({ createdAt: 1 });
-
-      if (messages.length === 0) {
-        return interaction.editReply("❌ Nie znaleziono wiadomości dla tego ticketu.");
-      }
-
-      let transcriptContent;
-      let fileName;
-      let contentType;
-
-      switch (format) {
-        case "html":
-          transcriptContent = await this.generateHTMLTranscript(ticket, messages, interaction.guild);
-          fileName = `ticket-${ticket.ticketId}-transcript.html`;
-          contentType = "text/html";
-          break;
-        
-        case "json":
-          transcriptContent = await this.generateJSONTranscript(ticket, messages);
-          fileName = `ticket-${ticket.ticketId}-transcript.json`;
-          contentType = "application/json";
-          break;
-        
-        default: // txt
-          transcriptContent = await this.generateTextTranscript(ticket, messages);
-          fileName = `ticket-${ticket.ticketId}-transcript.txt`;
-          contentType = "text/plain";
-          break;
-      }
-
-      // Utwórz załącznik
-      const buffer = Buffer.from(transcriptContent, 'utf-8');
-      const attachment = new AttachmentBuilder(buffer, { 
-        name: fileName,
-        description: `Transkrypt ticketu #${ticket.ticketId.split('-')[1]}`
-      });
-
-      // Utwórz embed z informacjami
-      const exportEmbed = new EmbedBuilder()
-        .setTitle("📋 Transkrypt Wyeksportowany")
-        .setDescription(
-          `**Ticket:** #${ticket.ticketId.split('-')[1]}\n` +
-          `**Użytkownik:** ${ticket.username}\n` +
-          `**Kategoria:** ${ticket.category}\n` +
-          `**Status:** ${ticket.status}\n` +
-          `**Liczba wiadomości:** ${messages.length}\n` +
-          `**Format:** ${format.toUpperCase()}\n` +
-          `**Wyeksportowany przez:** ${interaction.user}`
-        )
-        .setColor("#3498db")
-        .setTimestamp()
-        .setFooter({ text: `Ticket ID: ${ticket.ticketId}` });
-
-      await interaction.editReply({
-        embeds: [exportEmbed],
-        files: [attachment]
-      });
-
-    } catch (error) {
-      console.error("Błąd podczas eksportu transkryptu:", error);
-      await interaction.editReply("❌ Wystąpił błąd podczas eksportu transkryptu.");
-    }
-  },
-
-  async generateTextTranscript(ticket, messages) {
-    let transcript = `=== TRANSKRYPT TICKETU ${ticket.ticketId} ===\n\n`;
-    transcript += `Ticket #${ticket.ticketId.split('-')[1]}\n`;
-    transcript += `Użytkownik: ${ticket.username}\n`;
-    transcript += `Kategoria: ${ticket.category}\n`;
-    transcript += `Priorytet: ${ticket.priority}\n`;
-    transcript += `Status: ${ticket.status}\n`;
-    transcript += `Utworzony: ${ticket.createdAt.toLocaleString('pl-PL')}\n`;
-    
-    if (ticket.assignedTo) {
-      transcript += `Przypisany do: ${ticket.assignedTo.username}\n`;
-    }
-    
-    if (ticket.closedBy) {
-      transcript += `Zamknięty przez: ${ticket.closedBy.username}\n`;
-      transcript += `Data zamknięcia: ${ticket.closedBy.closedAt.toLocaleString('pl-PL')}\n`;
-      transcript += `Powód zamknięcia: ${ticket.closedBy.reason}\n`;
-    }
-    
-    transcript += `\n${"=".repeat(60)}\n\n`;
-    
-    messages.forEach(msg => {
-      const timestamp = new Date(msg.createdAt).toLocaleString('pl-PL');
-      const authorPrefix = msg.isStaff ? "[PERSONEL]" : msg.isSystem ? "[SYSTEM]" : "[UŻYTKOWNIK]";
-      
-      transcript += `[${timestamp}] ${authorPrefix} ${msg.username}: ${msg.content}\n`;
-      
-      if (msg.attachments && msg.attachments.length > 0) {
-        msg.attachments.forEach(att => {
-          transcript += `  📎 Załącznik: ${att.name} (${att.url})\n`;
-        });
-      }
-      
-      transcript += "\n";
-    });
-    
-    return transcript;
-  },
-
-  async generateHTMLTranscript(ticket, messages, guild) {
-    const guildIcon = guild.iconURL() || "";
-    const ticketNumber = ticket.ticketId.split('-')[1];
-    
-    let html = `<!DOCTYPE html>
+        let html = `<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
@@ -304,14 +300,14 @@ module.exports = {
         
         <div class="messages">
             <h3>Wiadomości (${messages.length})</h3>`;
-    
-    messages.forEach(msg => {
-      const messageClass = msg.isStaff ? 'staff' : msg.isSystem ? 'system' : '';
-      const badge = msg.isStaff ? '<span class="badge staff">PERSONEL</span>' : 
-                   msg.isSystem ? '<span class="badge system">SYSTEM</span>' : 
-                   '<span class="badge">UŻYTKOWNIK</span>';
-      
-      html += `
+
+        messages.forEach(msg => {
+            const messageClass = msg.isStaff ? 'staff' : msg.isSystem ? 'system' : '';
+            const badge = msg.isStaff ? '<span class="badge staff">PERSONEL</span>' :
+                msg.isSystem ? '<span class="badge system">SYSTEM</span>' :
+                    '<span class="badge">UŻYTKOWNIK</span>';
+
+            html += `
             <div class="message ${messageClass}">
                 <div class="message-header">
                     <span class="username">${msg.username}</span>
@@ -319,20 +315,20 @@ module.exports = {
                     <span class="timestamp">${new Date(msg.createdAt).toLocaleString('pl-PL')}</span>
                 </div>
                 <div class="content">${msg.content.replace(/\n/g, '<br>')}</div>`;
-      
-      if (msg.attachments && msg.attachments.length > 0) {
-        msg.attachments.forEach(att => {
-          html += `
+
+            if (msg.attachments && msg.attachments.length > 0) {
+                msg.attachments.forEach(att => {
+                    html += `
                 <div class="attachment">
                     📎 <a href="${att.url}" target="_blank">${att.name}</a> (${Math.round(att.size / 1024)}KB)
                 </div>`;
+                });
+            }
+
+            html += `</div>`;
         });
-      }
-      
-      html += `</div>`;
-    });
-    
-    html += `
+
+        html += `
         </div>
         
         <div style="text-align: center; margin-top: 30px; color: #72767d; font-size: 0.9em;">
@@ -342,55 +338,55 @@ module.exports = {
     </div>
 </body>
 </html>`;
-    
-    return html;
-  },
 
-  async generateJSONTranscript(ticket, messages) {
-    const transcript = {
-      ticket: {
-        id: ticket.ticketId,
-        number: ticket.ticketId.split('-')[1],
-        title: ticket.title,
-        description: ticket.description,
-        category: ticket.category,
-        priority: ticket.priority,
-        status: ticket.status,
-        user: {
-          id: ticket.userId,
-          username: ticket.username
-        },
-        assignedTo: ticket.assignedTo || null,
-        closedBy: ticket.closedBy || null,
-        rating: ticket.rating || null,
-        createdAt: ticket.createdAt,
-        lastActivity: ticket.lastActivity,
-        messageCount: ticket.messageCount,
-        tags: ticket.tags || []
-      },
-      messages: messages.map(msg => ({
-        id: msg.messageId,
-        content: msg.content,
-        author: {
-          id: msg.userId,
-          username: msg.username
-        },
-        timestamp: msg.createdAt,
-        attachments: msg.attachments || [],
-        embeds: msg.embeds || [],
-        isStaff: msg.isStaff,
-        isSystem: msg.isSystem,
-        editedAt: msg.editedAt || null,
-        reactions: msg.reactions || []
-      })),
-      metadata: {
-        exportedAt: new Date(),
-        messageCount: messages.length,
-        format: "json",
-        version: "1.0"
-      }
-    };
-    
-    return JSON.stringify(transcript, null, 2);
-  }
+        return html;
+    },
+
+    async generateJSONTranscript(ticket, messages) {
+        const transcript = {
+            ticket: {
+                id: ticket.ticketId,
+                number: ticket.ticketId.split('-')[1],
+                title: ticket.title,
+                description: ticket.description,
+                category: ticket.category,
+                priority: ticket.priority,
+                status: ticket.status,
+                user: {
+                    id: ticket.userId,
+                    username: ticket.username
+                },
+                assignedTo: ticket.assignedTo || null,
+                closedBy: ticket.closedBy || null,
+                rating: ticket.rating || null,
+                createdAt: ticket.createdAt,
+                lastActivity: ticket.lastActivity,
+                messageCount: ticket.messageCount,
+                tags: ticket.tags || []
+            },
+            messages: messages.map(msg => ({
+                id: msg.messageId,
+                content: msg.content,
+                author: {
+                    id: msg.userId,
+                    username: msg.username
+                },
+                timestamp: msg.createdAt,
+                attachments: msg.attachments || [],
+                embeds: msg.embeds || [],
+                isStaff: msg.isStaff,
+                isSystem: msg.isSystem,
+                editedAt: msg.editedAt || null,
+                reactions: msg.reactions || []
+            })),
+            metadata: {
+                exportedAt: new Date(),
+                messageCount: messages.length,
+                format: "json",
+                version: "1.0"
+            }
+        };
+
+        return JSON.stringify(transcript, null, 2);
+    }
 };

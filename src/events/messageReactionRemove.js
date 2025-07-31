@@ -1,32 +1,32 @@
-const { Events } = require("discord.js");
+const {Events} = require("discord.js");
 const ReactionRole = require("../models/ReactionRole");
 
 module.exports = {
-  name: Events.MessageReactionRemove,
-  async execute(reaction, user) {
-    if (user.bot) return;
+    name: Events.MessageReactionRemove,
+    async execute(reaction, user) {
+        if (user.bot) return;
 
-    if (reaction.partial) {
-      try {
-        await reaction.fetch();
-      } catch (error) {
-        console.error("Błąd podczas pobierania pełnej reakcji:", error);
-        return;
-      }
-    }
+        if (reaction.partial) {
+            try {
+                await reaction.fetch();
+            } catch (error) {
+                console.error("Błąd podczas pobierania pełnej reakcji:", error);
+                return;
+            }
+        }
 
-    const config = await ReactionRole.findOne({
-      messageId: reaction.message.id,
-      emoji: reaction.emoji.name,
-    });
+        const config = await ReactionRole.findOne({
+            messageId: reaction.message.id,
+            emoji: reaction.emoji.name,
+        });
 
-    if (!config) return;
+        if (!config) return;
 
-    try {
-      const member = await reaction.message.guild.members.fetch(user.id);
-      await member.roles.remove(config.roleId);
-    } catch (error) {
-      console.error(`Błąd podczas usuwania roli za reakcję: ${error}`);
-    }
-  },
+        try {
+            const member = await reaction.message.guild.members.fetch(user.id);
+            await member.roles.remove(config.roleId);
+        } catch (error) {
+            console.error(`Błąd podczas usuwania roli za reakcję: ${error}`);
+        }
+    },
 };
